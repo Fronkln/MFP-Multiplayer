@@ -3033,7 +3033,7 @@ public class RootScript : MonoBehaviour
             }
             this.showDodgeAlert = false;
             this.showHintDodge = false;
-            Time.timeScale = (float)0;
+           // Time.timeScale = (float)0;
         }
         else
         {

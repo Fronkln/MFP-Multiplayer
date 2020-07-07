@@ -11,7 +11,6 @@ using UnityScript.Lang;
 
 public class EnemyScript : MonoBehaviour
 {
-
     private NetworkedEnemyScriptAttachment networkHelper;
 
     public bool wasActivatedByPlayers = false;
@@ -410,6 +409,7 @@ public class EnemyScript : MonoBehaviour
         dontCheckDistanceBeforeRunningLogic = true;
 
         networkHelper = gameObject.AddComponent<NetworkedEnemyScriptAttachment>();
+
 
         if (doorSpawn || rappelling || skyfall || motorcycle)
             networkHelper.registerSelfOnSpawn = true;
@@ -957,11 +957,6 @@ public class EnemyScript : MonoBehaviour
 
     public virtual void Update()
     {
-
-        if (Input.GetKeyDown(KeyCode.X))
-            //manualActivateTest = (manualActivateTest == false ? true : false);
-            remoteAlerted = true;
-
         this.playerDistance = this.enemyOptimizerScript.playerDistance;
         // playerDistance = 0;
         if (!this.dontCheckDistanceBeforeRunningLogic)
@@ -2781,13 +2776,15 @@ public class EnemyScript : MonoBehaviour
                 this.onGround = true;
                 this.ySpeed = this.xSpeed = this.targetXSpeed = 0.0f;
             }
+
+
             if (!this.root.dead || !(this.enemySpeechHandlerScript != null) || !this.enemySpeechHandlerScript.speaking)
                 return;
             this.speak(string.Empty, 1f, false);
 
             //update marker
 
-            if (wasActivatedByPlayers)
+            if (wasActivatedByPlayers) //move this code later on you cant yet caause you gotta test with abyeon
                 idle = false;
         }
     }

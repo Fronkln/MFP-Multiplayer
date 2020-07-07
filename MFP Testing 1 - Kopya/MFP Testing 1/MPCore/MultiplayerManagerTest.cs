@@ -338,6 +338,9 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
                 {
                     int newID = startIndex + 1;
 
+                    while (networkedBaseEntities.ContainsKey(newID))
+                        newID++;
+
                     entitiesToRegisterRUNTIME[i].entityIdentifier = newID;
                     MFPEditorUtils.Log(entitiesToRegisterRUNTIME[i].transform.name + " = " + entitiesToRegisterRUNTIME[i].entityIdentifier.ToString());
 

@@ -128,6 +128,7 @@
     <Compile Include="MPCore\Debug\DebugDisappearObject.cs" />
     <Compile Include="MPCore\Debug\Debugging.cs" />
     <Compile Include="MPCore\LoadNextLevelAllClientsAsync.cs" />
+    <None Include="MPCore\Networked Entities\BarrelScript.cs" />
     <Compile Include="MPCore\Networked Entities\BaseNetworkEntity.cs" />
     <Compile Include="MPCore\MFPMPUI.cs" />
     <Compile Include="MFPEditorUtils.cs" />

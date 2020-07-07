@@ -113,13 +113,26 @@ public class LevelChangerScript : MonoBehaviour
                 if (nrOfFinishedPlayers == MultiplayerManagerTest.inst.playerObjects.Count)
                     return;
 
-                SpectateMode.InitCam(MultiplayerManagerTest.inst.playerObjects.ElementAt(UnityEngine.Random.Range(1, MultiplayerManagerTest.inst.playerObjects.Count)).Key);
 
                 Invoke("ForceCompleteLevel", waitTime);
                 MFPEditorUtils.doPedroHint("A player has reached the end\nLevel will finish in " + waitTime.ToString() + " seconds.");
 
                 if (EMFDNS.isLocalUser(activatorID))
+                {
+
+                    if (MultiplayerManagerTest.inst.playerObjects.Count > 1)
+                    {
+
+                        int elementAt = UnityEngine.Random.Range(0, MultiplayerManagerTest.inst.playerObjects.Count);
+
+                        while (MultiplayerManagerTest.inst.playerObjects.ElementAt(elementAt).Key == MultiplayerManagerTest.inst.playerID)
+                            elementAt = UnityEngine.Random.Range(0, MultiplayerManagerTest.inst.playerObjects.Count);
+
+                        SpectateMode.InitCam(MultiplayerManagerTest.inst.playerObjects.ElementAt(elementAt).Key);
+                    }
+
                     PlayerScript.PlayerInstance.enabled = false;
+                }
             }
 
         }

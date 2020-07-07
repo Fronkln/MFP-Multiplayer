@@ -3,9 +3,12 @@ using Steamworks;
 using UnityEngine;
 
 
+
+//used for very specific cases like
 public class NetworkedBaseTransform : BaseNetworkEntity
 {
     public bool syncToggle = true;
+    public bool doLerpAuto = true;
 
     public Vector3 realPos = Vector3.zero;
 
@@ -35,10 +38,12 @@ public class NetworkedBaseTransform : BaseNetworkEntity
         {
             if (packageVars != null && packageVars.Length > 0)
                 realPos = (Vector3)packageVars[0];
-            else
-                MFPEditorUtils.Log("cant say we have any data");
 
-           transform.position = Vector3.Lerp(transform.position, realPos, 0.1f);
+            if (realPos != Vector3.zero)
+                if(doLerpAuto)
+                transform.position = Vector3.Lerp(transform.position, realPos, 0.1f);
+            else
+                MFPEditorUtils.Log("recieved pos is vector3 zero!");
 
         }
 

@@ -72,11 +72,6 @@ public static class NetworkedBaseRPCFunctions
                 entity.GetComponent<SpeechTriggerControllerScript>().TriggerTheSpeech(sender);
                 break;
             case 16:
-
-                if (!sender.isLocalUser())
-                    MFPEditorUtils.Log("we recieved it");
-
-
                 entity.packageVars = new object[1];
                 entity.packageVars[0] = packet.ReadVector3();
                 break;
