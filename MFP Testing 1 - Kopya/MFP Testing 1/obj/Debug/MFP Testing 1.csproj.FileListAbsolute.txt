@@ -1,0 +1,12 @@
+F:\steamapps2\steamapps\common\My Friend Pedro\My Friend Pedro - Blood Bullets Bananas_Data\Managed\MFP Testing 1.dll
+F:\steamapps2\steamapps\common\My Friend Pedro\My Friend Pedro - Blood Bullets Bananas_Data\Managed\MFP Testing 1.pdb
+C:\Users\orhan\source\repos\MFP Testing 1\MFP Testing 1\obj\Debug\MFP Testing 1.csprojAssemblyReference.cache
+C:\Users\orhan\source\repos\MFP Testing 1\MFP Testing 1\obj\Debug\MFP Testing 1.csproj.CoreCompileInputs.cache
+C:\Users\orhan\source\repos\MFP Testing 1\MFP Testing 1\obj\Debug\MFP Testing 1.csproj.CopyComplete
+C:\Users\orhan\source\repos\MFP Testing 1\MFP Testing 1\obj\Debug\MFP Testing 1.dll
+C:\Users\orhan\source\repos\MFP Testing 1\MFP Testing 1\obj\Debug\MFP Testing 1.pdb
+C:\Users\orhan\source\repos\MFP Testing 1 - Kopya\MFP Testing 1\obj\Debug\MFP Testing 1.csprojAssemblyReference.cache
+C:\Users\orhan\source\repos\MFP Testing 1 - Kopya\MFP Testing 1\obj\Debug\MFP Testing 1.csproj.CoreCompileInputs.cache
+C:\Users\orhan\source\repos\MFP Testing 1 - Kopya\MFP Testing 1\obj\Debug\MFP Testing 1.csproj.CopyComplete
+C:\Users\orhan\source\repos\MFP Testing 1 - Kopya\MFP Testing 1\obj\Debug\MFP Testing 1.dll
+C:\Users\orhan\source\repos\MFP Testing 1 - Kopya\MFP Testing 1\obj\Debug\MFP Testing 1.pdb
