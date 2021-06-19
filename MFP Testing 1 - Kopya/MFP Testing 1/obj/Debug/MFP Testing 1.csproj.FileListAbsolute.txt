@@ -10,3 +10,5 @@ C:\Users\orhan\source\repos\MFP Testing 1 - Kopya\MFP Testing 1\obj\Debug\MFP Te
 C:\Users\orhan\source\repos\MFP Testing 1 - Kopya\MFP Testing 1\obj\Debug\MFP Testing 1.csproj.CopyComplete
 C:\Users\orhan\source\repos\MFP Testing 1 - Kopya\MFP Testing 1\obj\Debug\MFP Testing 1.dll
 C:\Users\orhan\source\repos\MFP Testing 1 - Kopya\MFP Testing 1\obj\Debug\MFP Testing 1.pdb
+D:\Program Files (x86)\Steam\steamapps\common\My Friend Pedro\My Friend Pedro - Blood Bullets Bananas_Data\Managed\MFP Testing 1.dll
+D:\Program Files (x86)\Steam\steamapps\common\My Friend Pedro\My Friend Pedro - Blood Bullets Bananas_Data\Managed\MFP Testing 1.pdb

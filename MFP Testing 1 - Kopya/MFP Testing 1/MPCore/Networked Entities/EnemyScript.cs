@@ -12,6 +12,7 @@ using UnityScript.Lang;
 public class EnemyScript : MonoBehaviour
 {
     private NetworkedEnemyScriptAttachment networkHelper;
+    public NetworkedBaseTransform specialEnemySyncer;
 
     public bool wasActivatedByPlayers = false;
 
@@ -413,6 +414,13 @@ public class EnemyScript : MonoBehaviour
 
         if (doorSpawn || rappelling || skyfall || motorcycle)
             networkHelper.registerSelfOnSpawn = true;
+
+        if (skyfall || rappelling || motorcycle)
+        {
+            specialEnemySyncer = gameObject.AddComponent<NetworkedBaseTransform>();
+            specialEnemySyncer.doLerpAuto = false;
+            specialEnemySyncer.dontDoDebug = true;
+        }
 
         this.root = RootScript.RootScriptInstance;
         this.rootShared = RootSharedScript.Instance;
@@ -2777,6 +2785,8 @@ public class EnemyScript : MonoBehaviour
                 this.ySpeed = this.xSpeed = this.targetXSpeed = 0.0f;
             }
 
+            if (specialEnemySyncer != null)
+                specialEnemySyncer.DoLerp();
 
             if (!this.root.dead || !(this.enemySpeechHandlerScript != null) || !this.enemySpeechHandlerScript.speaking)
                 return;

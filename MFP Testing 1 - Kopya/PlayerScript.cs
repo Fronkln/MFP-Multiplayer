@@ -17,6 +17,10 @@ using UnityStandardAssets.ImageEffects;
 [Serializable]
 public class PlayerScript : MonoBehaviour
 {
+
+    public MeshRenderer[] allWepRenderers;
+
+
     public int playerNr;
     public bool isEnemy;
     public bool isEnemyActivated;
@@ -864,7 +868,7 @@ public class PlayerScript : MonoBehaviour
         this.fireWhileReloading = this.fireWhileReloadingS;
         this.allowFireWhileReloading = this.allowFireWhileReloadingS;
         this.flippingTable = this.flippingTableS;
-        this.weapon = this.weaponS;
+        // this.weapon = this.weaponS;
         this.faceRight = this.faceRightS;
         this.grabLength = this.grabLengthS;
         this.ropeLength = this.ropeLengthS;
@@ -919,6 +923,13 @@ public class PlayerScript : MonoBehaviour
             Vector3 vector3 = this.enemyHealthBar.localScale = localScale;
         }
         this.animator.SetBool("Dodging", false);
+
+        //Spawn on a random player
+
+        /*
+		if(MultiplayerManagerTest.connected)
+			if(Steamworks.SteamMatchmaking.GetNumLobbyMembers(MultiplayerManagerTest.inst.globalID) > 1)
+				transform.position = MultiplayerManagerTest.inst.playerObjects[UnityEngine.Random.Range(0, MultiplayerManagerTest.inst.playerObjects.Count)].transform.position;*/
     }
 
     public virtual void unlockAllWeapons()
@@ -947,6 +958,9 @@ public class PlayerScript : MonoBehaviour
             gameObject.AddComponent<NetworkedBaseTransform>();
 
         this.player = ReInput.players.GetPlayer(0);
+
+
+        allWepRenderers = GetComponentsInChildren<MeshRenderer>();
     }
 
     public virtual void Start()
@@ -1649,6 +1663,14 @@ public class PlayerScript : MonoBehaviour
         if ((double)this.disableInputTimer > 0.0)
             this.disableInputTimer -= this.timescale;
         float axisRaw = 0;
+
+        if (root.dead)
+        {
+            xSpeed = 0;
+            targetXSpeed = 0;
+            kXDir = 0;
+        }
+
         if ((double)this.health > 0.0 && (!this.root.sbClickCont || this.root.sbClickContDontFreeze) && (!this.overrideControls && (double)this.disableInputTimer <= 0.0 && !this.root.paused))
         {
             if (!this.onMotorcycle && !MFPMPUI.isTyping)
@@ -2609,6 +2631,11 @@ public class PlayerScript : MonoBehaviour
                     this.blackBarBottom.SetActive(true);
                     this.root.rumble(0, 1f, 0.08f);
                     this.root.rumble(1, 1f, 0.08f);
+                    PacketSender.SendPlayerLifeState(false);
+
+                    xSpeed = 0;
+                    targetXSpeed = 0;
+
                     this.root.dead = true;
                 }
             }
@@ -3646,6 +3673,11 @@ public class PlayerScript : MonoBehaviour
         this.tempShoulderRBulletPointR2DistanceMultiplier = 0.0f;
         this.invertedNormalizedTopDuckAmount = 1f - this.topDuckAmount / 90f;
         this.kickBack = this.weapon != 7 || !this.kSecondaryAim ? this.fireDelay : 0.0f;
+
+
+        if (root.dead)
+            return;
+
         if (this.faceRight)
         {
             if (this.aimWithLeftArm && this.mousePos2 != this.mousePos && ((double)this.mousePos2.x < (double)this.transform.position.x && !this.fightMode && ((double)this.punchTimer <= 0.0 && !this.onMotorcycle) && !this.hipSwing))
@@ -4108,6 +4140,9 @@ public class PlayerScript : MonoBehaviour
 
             //        PacketSender.SendGenericGunfire();
 
+            if (swinging)
+                PacketSender.SendPlayerGunSound(true, false);
+
             Vector3 vector3_1 = new Vector3(!this.wallTouchRight ? (!this.wallTouchLeft ? 0.0f : 0.1f) : -0.1f, (float)(-((double)this.topDuckAmount / 90.0) * 0.400000005960464), 0.0f);
             this.root.musicIntenseFactor = Mathf.Clamp01(this.root.musicIntenseFactor + 0.05f);
             this.root.playerFiredWeapon = true;
@@ -4157,8 +4192,8 @@ public class PlayerScript : MonoBehaviour
 
                     PacketSender.SendGenericGunfire(shootVec, shootRot, 0, UnityEngine.Random.Range(-4f, 4f), true);
 
-                    if (!kSecondaryAim)
-                        PacketSender.SendPlayerGunSound(false, false);
+                    //    if (!kSecondaryAim)
+                    //   PacketSender.SendPlayerGunSound(false, false);
 
                     //this.tempBulletVar = this.root.getBullet(this.bulletPointL.position + vector3_1, Quaternion.LookRotation(new Vector3(this.bulletPointLAimTarget.transform.position.x, this.bulletPointLAimTarget.transform.position.y, this.bulletPointL.position.z) - this.bulletPointL.position));
                     //  this.tempBulletScript = this.root.getBulletScript();
@@ -4185,8 +4220,9 @@ public class PlayerScript : MonoBehaviour
                     shootRot = Quaternion.LookRotation(new Vector3(this.bulletPointRAimTarget.transform.position.x, this.bulletPointRAimTarget.transform.position.y, this.bulletPointR.position.z) - this.bulletPointR.position);
 
                     PacketSender.SendGenericGunfire(shootVec, shootRot, 0, UnityEngine.Random.Range(-4f, 4f), true);
-                    if (!kSecondaryAim)
-                        PacketSender.SendPlayerGunSound(true, false);
+
+                    //    if (!kSecondaryAim)
+                    //     PacketSender.SendPlayerGunSound(true, false);
 
                     //   this.tempBulletVar = this.root.getBullet(this.bulletPointR.position + vector3_1, Quaternion.LookRotation(new Vector3(this.bulletPointRAimTarget.transform.position.x, this.bulletPointRAimTarget.transform.position.y, this.bulletPointR.position.z) - this.bulletPointR.position));
                     //   this.tempBulletScript = this.root.getBulletScript();
@@ -4333,28 +4369,44 @@ public class PlayerScript : MonoBehaviour
             }
             else if (this.weapon == 6)
             {
-                this.playGunSound(true);
+                //  this.playGunSound(true);
                 this.root.rumble(0, 0.25f, 0.15f);
                 this.root.rumble(1, 0.45f, 0.2f);
-                this.smokeParticle.Emit(this.root.generateEmitParams(this.bulletPointR2.position, Vector3.zero, 3f, 2f, new Color(1f, 1f, 1f, 0.1f)), 1);
-                this.shellParticle.Emit(this.root.generateEmitParams(this.handR.position, new Vector3(UnityEngine.Random.Range(-0.8f, 0.8f), (float)UnityEngine.Random.Range(3, 6), 0.0f), 0.15f, 3f, Color.white), 1);
-                for (int index = 0; index < 8; ++index)
+                //   this.smokeParticle.Emit(this.root.generateEmitParams(this.bulletPointR2.position, Vector3.zero, 3f, 2f, new Color(1f, 1f, 1f, 0.1f)), 1);
+                //   this.shellParticle.Emit(this.root.generateEmitParams(this.handR.position, new Vector3(UnityEngine.Random.Range(-0.8f, 0.8f), (float)UnityEngine.Random.Range(3, 6), 0.0f), 0.15f, 3f, Color.white), 1);
+
+
+                float[] bulletRnd = new float[8];
+
+                bulletRnd[0] = -999;
+
+                for (int index = 1; index < 8; ++index)
                 {
-                    this.tempBulletVar = this.root.getBullet(this.bulletPointR2.position + vector3_1, Quaternion.LookRotation(new Vector3(this.bulletPointRAimTarget2.transform.position.x, this.bulletPointRAimTarget2.transform.position.y, this.bulletPointR2.position.z) - this.bulletPointR2.position));
-                    if (!this.dodging && (double)this.tempShoulderRBulletPointR2DistanceMultiplier > 0.300000011920929)
-                        this.tempBulletVar.transform.rotation = Quaternion.LookRotation(this.mousePos - new Vector3(this.bulletPointRAimTarget2.transform.position.x, this.bulletPointRAimTarget2.transform.position.y, this.mousePos.z));
-                    this.tempBulletScript = this.root.getBulletScript();
-                    this.tempBulletScript.bulletKillOnHeadshot = false;
-                    this.tempBulletScript.bulletStrength = 0.2f;
-                    this.tempBulletScript.bulletSpeed = 8f + (float)index * 0.5f;
-                    this.tempBulletScript.bulletLength = 0.4f;
-                    this.tempBulletScript.allowGib = true;
-                    if (index > 0)
-                        this.tempBulletVar.transform.rotation *= Quaternion.Euler(UnityEngine.Random.Range(-9f, 9f), 0.0f, 0.0f);
-                    this.setBulletScoreParameters(this.tempBulletScript);
-                    this.tempBulletScript.tailCheck = Vector2.Distance((Vector2)this.tempBulletScript.transform.position, (Vector2)this.neck.position);
-                    this.tempBulletScript.doPostSetup();
+                    bulletRnd[index] = UnityEngine.Random.Range(-9f, 9f);
                 }
+
+
+                PacketSender.SendShotgunfire(this.bulletPointR2.position + vector3_1, Quaternion.LookRotation(new Vector3(this.bulletPointRAimTarget2.transform.position.x, this.bulletPointRAimTarget2.transform.position.y, this.bulletPointR2.position.z) - this.bulletPointR2.position), bulletRnd, (!this.dodging && (double)this.tempShoulderRBulletPointR2DistanceMultiplier > 0.300000011920929), new Vector3(this.bulletPointRAimTarget2.transform.position.x, this.bulletPointRAimTarget2.transform.position.y, this.bulletPointR2.position.z) - this.bulletPointR2.position);
+
+                /*    for (int index = 0; index < 8; ++index)
+                    {
+                        this.tempBulletVar = this.root.getBullet(this.bulletPointR2.position + vector3_1, Quaternion.LookRotation(new Vector3(this.bulletPointRAimTarget2.transform.position.x, this.bulletPointRAimTarget2.transform.position.y, this.bulletPointR2.position.z) - this.bulletPointR2.position));
+                        if (!this.dodging && (double)this.tempShoulderRBulletPointR2DistanceMultiplier > 0.300000011920929)
+                            this.tempBulletVar.transform.rotation = Quaternion.LookRotation(this.mousePos - new Vector3(this.bulletPointRAimTarget2.transform.position.x, this.bulletPointRAimTarget2.transform.position.y, this.mousePos.z));
+                        this.tempBulletScript = this.root.getBulletScript();
+                        this.tempBulletScript.bulletKillOnHeadshot = false;
+                        this.tempBulletScript.bulletStrength = 0.2f;
+                        this.tempBulletScript.bulletSpeed = 8f + (float)index * 0.5f;
+                        this.tempBulletScript.bulletLength = 0.4f;
+                        this.tempBulletScript.allowGib = true;
+                        if (index > 0)
+                            this.tempBulletVar.transform.rotation *= Quaternion.Euler(UnityEngine.Random.Range(-9f, 9f), 0.0f, 0.0f);
+                        this.setBulletScoreParameters(this.tempBulletScript);
+                        this.tempBulletScript.tailCheck = Vector2.Distance((Vector2)this.tempBulletScript.transform.position, (Vector2)this.neck.position);
+                        this.tempBulletScript.doPostSetup();
+                    }
+
+                    */
                 this.root.getMuzzleFlash(3, this.bulletPointR2.position, Quaternion.LookRotation(new Vector3(this.bulletPointRAimTarget2.transform.position.x, this.bulletPointRAimTarget2.transform.position.y, this.bulletPointR2.position.z) - this.bulletPointR2.position) * Quaternion.Euler(0.0f, 270f, 0.0f));
                 this.cameraScript.screenShake += 0.08f;
                 this.cameraScript.kickBack(0.45f);
@@ -4380,23 +4432,32 @@ public class PlayerScript : MonoBehaviour
             }
             else if (this.weapon == 9)
             {
-                this.playGunSound(true);
+                // this.playGunSound(true);
                 this.root.rumble(0, 0.35f, 0.1f);
                 this.root.rumble(1, 0.35f, 0.15f);
-                this.smokeParticle.Emit(this.root.generateEmitParams(this.bulletPointR2.position, Vector3.zero, 3f, 2f, new Color(1f, 1f, 1f, 0.1f)), 1);
-                this.shellParticle.Emit(this.root.generateEmitParams(this.handR.position, new Vector3(UnityEngine.Random.Range(-0.8f, 0.8f), (float)UnityEngine.Random.Range(3, 6), 0.0f), 0.15f, 3f, Color.white), 1);
-                this.tempBulletVar = this.root.getBullet(this.bulletPointR2.position + vector3_1, Quaternion.LookRotation(new Vector3(this.bulletPointRAimTarget2.transform.position.x, this.bulletPointRAimTarget2.transform.position.y, this.bulletPointR2.position.z) - this.bulletPointR2.position));
-                if (!this.dodging && (double)this.tempShoulderRBulletPointR2DistanceMultiplier > 0.300000011920929)
-                    this.tempBulletVar.transform.rotation = Quaternion.LookRotation(this.mousePos - new Vector3(this.bulletPointRAimTarget2.transform.position.x, this.bulletPointRAimTarget2.transform.position.y, this.mousePos.z));
-                this.tempBulletScript = this.root.getBulletScript();
-                this.tempBulletScript.bulletStrength = 1f;
-                this.tempBulletScript.bulletSpeed = 17f;
-                this.tempBulletScript.bulletLength = 2.5f;
-                this.tempBulletScript.knockBack = true;
-                this.tempBulletScript.doPostSetup();
+                //   this.smokeParticle.Emit(this.root.generateEmitParams(this.bulletPointR2.position, Vector3.zero, 3f, 2f, new Color(1f, 1f, 1f, 0.1f)), 1);
+                //  this.shellParticle.Emit(this.root.generateEmitParams(this.handR.position, new Vector3(UnityEngine.Random.Range(-0.8f, 0.8f), (float)UnityEngine.Random.Range(3, 6), 0.0f), 0.15f, 3f, Color.white), 1);
+
+                /*     this.tempBulletVar = this.root.getBullet(this.bulletPointR2.position + vector3_1, Quaternion.LookRotation(new Vector3(this.bulletPointRAimTarget2.transform.position.x, this.bulletPointRAimTarget2.transform.position.y, this.bulletPointR2.position.z) - this.bulletPointR2.position));
+             if (!this.dodging && (double)this.tempShoulderRBulletPointR2DistanceMultiplier > 0.300000011920929)
+                 this.tempBulletVar.transform.rotation = Quaternion.LookRotation(this.mousePos - new Vector3(this.bulletPointRAimTarget2.transform.position.x, this.bulletPointRAimTarget2.transform.position.y, this.mousePos.z));
+             this.tempBulletScript = this.root.getBulletScript();
+             this.tempBulletScript.bulletStrength = 1f;
+             this.tempBulletScript.bulletSpeed = 17f;
+             this.tempBulletScript.bulletLength = 2.5f;
+             this.tempBulletScript.knockBack = true;
+             this.tempBulletScript.doPostSetup();
+             */
+
+                float quaternionRnd = (!kSecondaryAim ? UnityEngine.Random.Range(-1f, 1f) : -999);
+
                 this.root.getMuzzleFlash(4, this.bulletPointR2.position, Quaternion.LookRotation(new Vector3(this.bulletPointRAimTarget2.transform.position.x, this.bulletPointRAimTarget2.transform.position.y, this.bulletPointR2.position.z) - this.bulletPointR2.position) * Quaternion.Euler(0.0f, 270f, 0.0f));
-                if (!this.kSecondaryAim)
-                    this.tempBulletVar.transform.rotation *= Quaternion.Euler(UnityEngine.Random.Range(-1f, 1f) * this.aimSpread, 0.0f, 0.0f);
+
+                PacketSender.SendGenericGunfire(bulletPointR2.position + vector3_1, Quaternion.LookRotation(new Vector3(this.bulletPointRAimTarget2.transform.position.x, this.bulletPointRAimTarget2.transform.position.y, this.bulletPointR2.position.z) - this.bulletPointR2.position), quaternionRnd, aimSpread, false);
+
+                /*     if (!this.kSecondaryAim)
+                        this.tempBulletVar.transform.rotation *= Quaternion.Euler(UnityEngine.Random.Range(-1f, 1f) * this.aimSpread, 0.0f, 0.0f);
+                        */
                 this.cameraScript.onOffScreenShake = 0.11f;
                 this.cameraScript.kickBack(0.25f);
                 this.fireDelay = 6f;

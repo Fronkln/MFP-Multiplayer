@@ -10,7 +10,7 @@ public class DiscordCT
 
     //dont let the class name fool you, use this class for mod initialization
 
-    public static DiscordController discordController;
+
     public static AssetBundle multiplayerBundle;
     public static AssetBundle debugBundle;
 
@@ -20,8 +20,6 @@ public class DiscordCT
 
     public static void Init()
     {
-        if (discordController != null) return;
-
         if (!alreadyLoaded)
         {
             multiplayerBundle = AssetBundle.LoadFromFile(MFPEditorUtils.LoadFile("mfpmultiplayer"));
@@ -31,9 +29,23 @@ public class DiscordCT
             multiplayerUI.AddComponent<MFPMPUI>();
             alreadyLoaded = true;
 
+            MFPMPUI.playerAvatarTemplate = GameObject.Instantiate(multiplayerBundle.LoadAsset<GameObject>("playerAvatar"));
+            MFPMPUI.playerAvatarTemplate.AddComponent<WorldSpaceUI>();
+            GameObject.DontDestroyOnLoad(MFPMPUI.playerAvatarTemplate);
+            MFPEditorUtils.Log((MFPMPUI.playerAvatarTemplate != null).ToString());
+
             HarmonyPatches.InitPatches();
-            new GameObject().AddComponent<DiscordController>();
-            new GameObject().AddComponent<MultiplayerManagerTest>().transform.name = "MultiplayerManager";
+            CustomizationAssets.Load();
+
+            //harddisk gelene kadar yok maalesef, çok istiyorsan yeni bir package yaparsın
+            Debugging.debugText = DiscordCT.multiplayerBundle.LoadAsset("DebugText") as GameObject;
+            //  debugText = DiscordCT.debugBundle.LoadAsset("DebugText") as GameObject;
+            Debugging.debugCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            GameObject.Destroy(Debugging.debugCube.GetComponent<BoxCollider>());
+            Debugging.debugCube.AddComponent<DebugDisappearObject>();
+            Debugging.debugCube.SetActive(false);
+
+            new GameObject("MultiplayerManager").AddComponent<MultiplayerManagerTest>();
         }
 
         MFPEditorUtils.ClearLog();

@@ -30,6 +30,7 @@ public class NetworkedBaseRigidbody : BaseNetworkEntity
         rBody = GetComponent<Rigidbody>();
     }
 
+
     public void ReadPackage(P2PMessage package)
     {
         recievedPos = package.ReadVector3();

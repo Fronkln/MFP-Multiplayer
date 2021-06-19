@@ -85,18 +85,12 @@ public static class PacketEventHandler
 
                 if (MultiplayerManagerTest.inGameplayLevel)
                 {
-
-                    MFPEditorUtils.Log("not pog!");
-
                     if (!MultiplayerManagerTest.inst.forceNextLevelDoOnce)
                     {
-                        MFPEditorUtils.Log("A");
                         GameObject.FindObjectOfType<LevelCompleteScreenScript>().MultiplayerGoNextLevel();
-                        MFPEditorUtils.Log("A2");
                     }
                     else
                     {
-                        MFPEditorUtils.Log("this part executes hhh");
                         GameObject.FindObjectOfType<LoadNextLevelAllClientsAsync>().asyncLoad.allowSceneActivation = true;
                         MultiplayerManagerTest.transitioningToNextLevel = true;
                     }
@@ -106,7 +100,9 @@ public static class PacketEventHandler
                 if (MultiplayerManagerTest.inMenu)
                 {
                     MultiplayerManagerTest.transitioningToNextLevel = true;
+                    RootSharedScript.Instance.levelLoadedFromLevelSelectScreen = true;
                     MultiplayerManagerTest.inst.loadLobbyLevelOperation.allowSceneActivation = true;
+                    MultiplayerManagerTest.inst.levelTransitionReady.Clear();
                 }
 
                 break;
@@ -177,7 +173,14 @@ public static class PacketEventHandler
             case 16:
                 new GameObject().AddComponent<LoadNextLevelAllClientsAsync>();
                 break;
+            case 17:
+                BulletSync.HandleShotgunSync(packet, remoteID);
+                break;
 
+            case 18:
+                PvPManager.instance.OnSlowmotionEventStart();
+                break;
+            
 
             //HostActivateEntityRequest
             case 252:
@@ -198,9 +201,10 @@ public static class PacketEventHandler
                 if (!MultiplayerManagerTest.inst.networkedBaseEntities.ContainsKey(entityID)) //this shouldnt happen at all
                     return;
 
-
-                if (MultiplayerManagerTest.extraDebug && !MultiplayerManagerTest.inst.networkedBaseEntities[entityID].dontDoDebug)
+#if DEBUG
+                if (MultiplayerManagerTest.extraDebug && !MultiplayerManagerTest.inst.networkedBaseEntities[entityID].dontDoDebug && MultiplayerManagerTest.inst.networkedBaseEntities[entityID].debugHelper != null)
                     MultiplayerManagerTest.inst.networkedBaseEntities[entityID].debugHelper.OnRPC(NetworkedBaseRPCFunctions.ReturnRPCName(rpcID), RPCSendMode.EVERYONE);
+#endif
 
                 NetworkedBaseRPCFunctions.DoRPC(MultiplayerManagerTest.inst.networkedBaseEntities[entityID], remoteID, rpcID, packet);
 

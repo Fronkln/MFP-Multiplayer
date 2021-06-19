@@ -19,12 +19,6 @@ public class ObjectKickScript : MonoBehaviour
 
     // Token: 0x06000324 RID: 804 RVA: 0x000467F8 File Offset: 0x000449F8
 
-    public virtual void Awake()
-    {
-        networkHelper = gameObject.AddComponent<NetworkedBaseRigidbody>();
-        networkHelper.dontDoDebug = true;
-    }
-
 
     // Token: 0x06000327 RID: 807 RVA: 0x00046980 File Offset: 0x00044B80
     public virtual void Start()
@@ -37,8 +31,15 @@ public class ObjectKickScript : MonoBehaviour
         this.mainPlayer = GameObject.Find("Player").transform;
         this.playerLFoot = this.mainPlayer.Find("PlayerGraphics/Armature/Center/Hip_L/UpperLeg_L/LowerLeg_L/Foot_L");
         this.playerScript = (PlayerScript)GameObject.Find("Player").GetComponent(typeof(PlayerScript));
+
         if (this.playerScript.onMotorcycle)
             ((ObjectKickScript)this.GetComponent(typeof(ObjectKickScript))).enabled = false;
+        else
+        {
+            networkHelper = gameObject.AddComponent<NetworkedBaseRigidbody>();
+            networkHelper.dontDoDebug = true;
+        }
+
 
         this.physicsSoundsScript = (PhysicsSoundsScript)this.GetComponent(typeof(PhysicsSoundsScript));
         this.audioSource = (AudioSource)this.GetComponent(typeof(AudioSource));

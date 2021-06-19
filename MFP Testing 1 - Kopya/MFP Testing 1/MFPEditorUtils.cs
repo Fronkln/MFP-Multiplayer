@@ -21,9 +21,11 @@ class MFPEditorDebuggerRuntime : MonoBehaviour
         DontDestroyOnLoad(this.gameObject);
     }
 
+#if DEBUG
     public void OnGUI()
     {
-        if (logs == null) logs = new List<string>();
+        if (logs == null) 
+            logs = new List<string>();
 
 
         if (logs.Count > 10)
@@ -55,6 +57,9 @@ class MFPEditorDebuggerRuntime : MonoBehaviour
                         if (!ent.interactingPlayer.isNull())
                             GUILayout.Button("Interacting Player: " + Steamworks.SteamFriends.GetFriendPersonaName(ent.interactingPlayer));
                     }
+                    else if (hit.transform.root.name.StartsWith("PlayerGhost"))
+                        GUILayout.Button("GameObject Layer: " + hit.transform.gameObject.layer.ToString());
+                            
 
                     if (Input.GetKey(KeyCode.LeftShift) && Input.GetKeyDown(KeyCode.U))
                     {
@@ -88,6 +93,7 @@ class MFPEditorDebuggerRuntime : MonoBehaviour
         }
     }
 
+#endif
     public void GUILog(string txt)
     {
         logs.Add(txt);
@@ -140,7 +146,9 @@ public static class MFPEditorUtils
         Debug.Log("[MFPEDITORUTILS]:" + text);
         File.AppendAllText(LoadFile(modName + "_log.txt"), Environment.NewLine + text);
 
-        if (guiInstance != null)
+        if (guiInstance == null)
+            InitGUILogging();
+
             guiInstance.GUILog(text);
     }
 

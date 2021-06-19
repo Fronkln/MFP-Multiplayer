@@ -52,6 +52,14 @@ public class LaserDetectorScript : MonoBehaviour
         }
     }
 
+
+    public virtual void Awake()
+    {
+        networkHelper = gameObject.AddComponent<BaseNetworkEntity>();
+        networkHelper.entityStates.Add(OnLaserTriggered);
+    }
+
+
     public virtual void Start()
     {
         this.root = (RootScript)GameObject.Find("Root").GetComponent(typeof(RootScript));
@@ -116,7 +124,7 @@ public class LaserDetectorScript : MonoBehaviour
                     if (this.turnOffWhenTriggered)
                     {
                         this.root.hasTriggeredAlarm = true;
-                        PacketSender.BaseNetworkedEntityRPC("OnLaserTriggered", networkHelper.entityIdentifier);
+                           PacketSender.BaseNetworkedEntityRPC("OnLaserTriggered", networkHelper.entityIdentifier);
                         //    this.beenTriggered = true;
                         //  this.laser.gameObject.SetActive(false);
                     }

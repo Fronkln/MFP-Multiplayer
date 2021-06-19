@@ -74,6 +74,7 @@ public class P2PMessage
             WriteInteger((int)obj);
             return;
         }
+
         if (obj is string)
         {
             WriteUnicodeString((string)obj);
@@ -112,6 +113,12 @@ public class P2PMessage
     public void WriteBool(bool boolean)
     {
         WriteByte(Convert.ToByte(boolean));
+    }
+
+    public void WriteVector2(Vector2 v2)
+    {
+        this.WriteFloat(v2.x);
+        this.WriteFloat(v2.y);
     }
 
     public void WriteVector3(Vector3 v3)
@@ -293,6 +300,11 @@ public class P2PMessage
         int integer = (int)BitConverter.ToInt32(this.rBytes, this.rPos);
         this.rPos += 4;
         return integer;
+    }
+
+    public Vector2 ReadVector2()
+    {
+        return new Vector2(this.ReadFloat(), this.ReadFloat());
     }
 
     public Vector3 ReadVector3()

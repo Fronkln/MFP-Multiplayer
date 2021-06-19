@@ -9,6 +9,7 @@ public class LoadNextLevelAllClientsAsync : MonoBehaviour
     public AsyncOperation asyncLoad;
     private bool asyncLoadDone = false;
 
+
     public IEnumerator LoadNextLevel()
     {
 

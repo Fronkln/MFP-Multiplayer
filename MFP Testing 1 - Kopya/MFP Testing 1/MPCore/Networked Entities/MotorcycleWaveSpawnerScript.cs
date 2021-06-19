@@ -121,7 +121,7 @@ public class MotorcycleWaveSpawnerScript : MonoBehaviour
         }
         if (this.switchInput >= (float)1)
         {
-            if (MultiplayerManagerTest.playingAsHost || MultiplayerManagerTest.inst.gamemode == MPGamemodes.Race)
+            if (MultiplayerManagerTest.playingAsHost && EMFDNS.isNull(networkHelper.interactingPlayer) || MultiplayerManagerTest.inst.gamemode == MPGamemodes.Race)
             {
                 networkHelper.ignoreMaxPacketsDoOnce = true;
                 PacketSender.BaseNetworkedEntityRPC("OnPlayerStartInteract", networkHelper.entityIdentifier, new object[] { MultiplayerManagerTest.inst.playerID.m_SteamID });

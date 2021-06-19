@@ -1616,9 +1616,14 @@ public class RootScript : MonoBehaviour
         this.kActionDoOnce = this.kActionDoOnceS;
         this.framesSinceBloodSplatter = this.framesSinceBloodSplatterS;
         this.dead = this.deadS;
-        this.actionModeActivated = this.actionModeActivatedS;
-        this.actionModeActivatedDoOnce = this.actionModeActivatedDoOnceS;
-        this.actionModeActivatedDoOnce2 = this.actionModeActivatedDoOnce2S;
+
+        if (MultiplayerManagerTest.inst.gamemode != MPGamemodes.PvP)
+        {
+            this.actionModeActivated = this.actionModeActivatedS;
+            this.actionModeActivatedDoOnce = this.actionModeActivatedDoOnceS;
+            this.actionModeActivatedDoOnce2 = this.actionModeActivatedDoOnce2S;
+        }
+
         this.timeInActionMode = this.timeInActionModeS;
         this.camTransitionValue = this.camTransitionValueS;
         this.camTransitionDoOnce = this.camTransitionDoOnceS;
@@ -2491,6 +2496,9 @@ public class RootScript : MonoBehaviour
             {
                 if (this.player.GetButtonDown("Focus"))
                 {
+                    if (MultiplayerManagerTest.inst.gamemode == MPGamemodes.PvP)
+                        return;
+
                     if (this.slowMotionAmount > (float)0 && !this.dontAllowActionMode)
                     {
                         this.actionModeActivated = !this.actionModeActivated;
@@ -2608,11 +2616,13 @@ public class RootScript : MonoBehaviour
                 {
                     this.unityTimescale = this.DampUnscaled((!this.kAction) ? ((float)1) : (Mathf.Clamp(this.rootShared.modFocusSlowdownScale, (float)3, (float)100) * 0.01f), this.unityTimescale, 0.05f);
                     this.targetUnityTimescale = ((!this.kAction) ? ((float)1) : (Mathf.Clamp(this.rootShared.modFocusSlowdownScale, (float)3, (float)100) * 0.01f));
+
                 }
                 else
                 {
                     this.unityTimescale = this.DampUnscaled((!this.kAction) ? ((float)1) : (Mathf.Clamp(this.rootShared.modFocusSlowdownScale, (float)3, (float)100) * 0.01f), this.unityTimescale, 0.3f);
                     this.targetUnityTimescale = ((!this.kAction) ? ((float)1) : (Mathf.Clamp(this.rootShared.modFocusSlowdownScale, (float)3, (float)100) * 0.01f));
+
                 }
             }
             if (this.instructionBackground.gameObject.activeInHierarchy)
@@ -3033,7 +3043,7 @@ public class RootScript : MonoBehaviour
             }
             this.showDodgeAlert = false;
             this.showHintDodge = false;
-           // Time.timeScale = (float)0;
+            // Time.timeScale = (float)0;
         }
         else
         {

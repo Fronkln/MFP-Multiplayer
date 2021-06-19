@@ -2,7 +2,10 @@
 using System.Linq;
 using UnityEngine;
 
-public static class EMFDNS //Extension Methods For DnSpy
+/// <summary>
+/// Extension Methods For DnSpy
+/// </summary>
+public static class EMFDNS
 {
     public static Transform GetNearestPlayer(Vector3 startPos)
     {
@@ -26,8 +29,10 @@ public static class EMFDNS //Extension Methods For DnSpy
 
         }
 
+#if DEBUG
         if (MultiplayerManagerTest.extraDebug)
             Debugging.CreateDisappearingCube(closest.transform.position, Quaternion.identity, new Vector3(0.2f, 0.2f, 0.2f), 0.2f);
+#endif
 
         return closest;
     }

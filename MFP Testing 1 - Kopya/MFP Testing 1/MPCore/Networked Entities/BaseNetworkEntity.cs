@@ -8,16 +8,13 @@ using Steamworks;
 
 /*
  * 
- * DEFINITION OF A BASE NETWORK ENTITY: A SINGLEPLAYER ENTITY WHICH ALREADY EXISTED IN THE MAP OR WILL SPAWN BUT NOT DISAPPEAR 
+ * DEFINITION OF A BASE NETWORK ENTITY: A SINGLEPLAYER ENTITY WHICH ALREADY EXISTED IN THE MAP OR WILL SPAWN
  * CONVERTED TO ITS NETWORKED STATE FOR THE MOST PART, HANDLED IN CONVERTOBJECTSTONETWORK()
- * UNLESS A PLAYER DESTROYS ONE OF THESE OBJECTS THE ARRAY ORDER WILL ALWAYS BE THE SAME!
  * 
- * NO MATTER WHAT, BASENETWORKENTITIES MUST BE INITIALIZED ON AWAKE()
+ * BASENETWORKENTITIES ARE RECCOMENDED TO BE INITIALIZED ON AWAKE()
  * 
  * 
- * ALSO, MULTIPLAYERMANAGERTEST CONVERTING SINGLEPLAYER OBJECTS TO NETWORK MANUALLY WILL BREAK THINGS, GOTTA MODIFY WITH DNSPY
- * START WITH FIXING PLATFORMLIFTSCRIPT, GOOD LUCK BROTHER, IF A MONOBEHAVIOUR CRASHES THE GAME AFTER INHERITING BASENETWORKENTITY
- * MAKE "ATTACHMENT" ENTITIES THAT SERVE AS A NETWORK HELPER WITHOUT DIRECTLY CHANGING THE INHERITANCE OF THE BASE CLASS ITSELF.
+ * ALSO, MULTIPLAYERMANAGERTEST CONVERTING SINGLEPLAYER OBJECTS TO NETWORK MANUALLY WILL BREAK THINGS
  * 
  * 
  * THERE IS NO SUCH THING AS BASENETWORKENTITIES NOT SYNCHRONIZING LITERALLY ALL THE TIME.
@@ -59,6 +56,11 @@ public class BaseNetworkEntity : MonoBehaviour
 
     public DebugBaseNetworkedEntity debugHelper;
 
+    //Definition of a state: a method that doesnt take actions (for example, flipping tables and
+    //platform disappearing could make great "states")
+
+    public List<Action> entityStates = new List<Action>();
+
 
  /*   public IEnumerator ResetPackets()
     {
@@ -84,6 +86,20 @@ public class BaseNetworkEntity : MonoBehaviour
             DestroyImmediate(GetComponent<SaveStateSimpleControllerScript>());
     }
 
+    public void ExecuteState(byte state)
+    {
+
+        if (state < entityStates.Count - 1)
+        {
+            MFPEditorUtils.Log("State " + state + " does not exist on " + transform.name);
+            return;
+        }
+
+        entityStates[state].Invoke();
+
+        MFPEditorUtils.Log("Trying to run " + state.ToString());
+    }
+
     public virtual void Awake()
     {
         if(MultiplayerManagerTest.inst != null)
@@ -104,15 +120,11 @@ public class BaseNetworkEntity : MonoBehaviour
         else
         {
             MultiplayerManagerTest.entitiesToRegisterRUNTIME.Add(this);
-            MFPEditorUtils.Log("Runtime Entity" + transform.name);
+            MFPEditorUtils.Log("Runtime Entity " + transform.name);
         }
-
-
-        if (MultiplayerManagerTest.extraDebug && !dontDoDebug)
-            debugHelper = gameObject.AddComponent<DebugBaseNetworkedEntity>();
     }
 
-
+    [Obsolete]
     public void SelfRegister()
     {
         return;
@@ -128,8 +140,11 @@ public class BaseNetworkEntity : MonoBehaviour
 
     public virtual void Start()
     {
-        if (entityIdentifier == -1 && MultiplayerManagerTest.inst.initComplete)
-            SelfRegister();
+#if DEBUG
+        if (MultiplayerManagerTest.extraDebug)
+            if(dontDoDebug)
+            debugHelper = gameObject.AddComponent<DebugBaseNetworkedEntity>();
+#endif
     }
 
     public virtual void Update()
@@ -149,7 +164,7 @@ public class BaseNetworkEntity : MonoBehaviour
         if (curPackets != 0)
         {
             if (packetTime < packetResetTime)
-                packetTime += Time.deltaTime;
+                packetTime += Time.unscaledDeltaTime;
             else
             {
                 packetTime = 0;

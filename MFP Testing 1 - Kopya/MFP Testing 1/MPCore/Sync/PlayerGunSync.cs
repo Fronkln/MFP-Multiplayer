@@ -17,6 +17,9 @@ public static class PlayerGunSync
 
     public static void HandleGunSwitch(P2PMessage packet, CSteamID remoteID)
     {
+        if (!MultiplayerManagerTest.inst.playerObjects.ContainsKey(remoteID))
+            return;
+
         byte weapon = packet.ReadByte();
         MultiplayerManagerTest.inst.playerObjects[remoteID].ChangeWeapon(weapon);
     }

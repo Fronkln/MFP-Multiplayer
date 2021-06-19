@@ -7,7 +7,7 @@ public class BarrelScript : MonoBehaviour
 {
     private bool playerIsOnBarrel = false;
 
-    private BaseNetworkEntity networkHelper;
+    private NetworkedBaseRigidbody networkHelper;
 
     // Token: 0x0400011E RID: 286
     private RootScript root;
@@ -129,6 +129,7 @@ public class BarrelScript : MonoBehaviour
     // Token: 0x0600005B RID: 91 RVA: 0x000022EF File Offset: 0x000004EF
     public virtual void LateUpdate()
     {
+
         if (this.root.doCheckpointSave)
         {
             this.saveState();
@@ -143,6 +144,7 @@ public class BarrelScript : MonoBehaviour
     public virtual void Awake()
     {
         networkHelper = gameObject.AddComponent<NetworkedBaseRigidbody>();
+        networkHelper.interactToSync = true;
     }
 
     // Token: 0x0600005C RID: 92 RVA: 0x0000A080 File Offset: 0x00008280

@@ -1072,7 +1072,7 @@ public class OptionsMenuScript : MonoBehaviour
             this.createOption(0, this.rootShared.GetTranslation("mResume"), string.Empty, TextAnchor.MiddleLeft, false, false, (float)0);
             this.createOption(1, this.rootShared.GetTranslation("mRestart"), string.Empty, TextAnchor.MiddleLeft, false, false, (float)10);
             this.createOption(2, this.rootShared.GetTranslation("mOptions"), string.Empty, TextAnchor.MiddleLeft, false, false, (float)0);
-            this.createOption(3, this.rootShared.GetTranslation("mExit"), string.Empty, TextAnchor.MiddleLeft, false, false, (float)10);
+            this.createOption(3, (!MultiplayerManagerTest.connected ? this.rootShared.GetTranslation("mExit") : "Disconnect"), string.Empty, TextAnchor.MiddleLeft, false, false, (float)10);
             if (this.rootShared.allowDebugMenu || !this.rootShared.runningOnConsole)
             {
                 this.createOption(4, this.rootShared.GetTranslation("mQuit"), string.Empty, TextAnchor.MiddleLeft, false, false, (float)0);
@@ -1089,6 +1089,9 @@ public class OptionsMenuScript : MonoBehaviour
             {
                 this.disableOption[4] = true;
             }
+
+            this.disableOption[1] = true;
+
             this.curOption = 0;
             this.curOptionSortedNr = (float)0;
             this.updateOptionSettings(true);
@@ -1136,8 +1139,8 @@ public class OptionsMenuScript : MonoBehaviour
     {
         this.clearMenu();
         this.curActiveMenu = (float)0;
-        this.theHeader.text = this.rootShared.GetTranslation("mMain");
-        this.nrOfOptions = (float)7;
+        this.theHeader.text = "My Friend Pedro: Multiplayer";
+        this.nrOfOptions = (float)4;
         if (this.rootShared.runningOnConsole)
         {
             this.nrOfOptions -= (float)1;
@@ -1145,16 +1148,18 @@ public class OptionsMenuScript : MonoBehaviour
         this.menuBackOptionNr = -1;
         this.curOptionSortedNr = (float)0;
         this.setUpArrays();
-        this.createOption(0, this.rootShared.GetTranslation("mContinue"), string.Empty, TextAnchor.MiddleLeft, false, false, (float)0);
-        this.createOption(1, this.rootShared.GetTranslation("mNewGame"), string.Empty, TextAnchor.MiddleLeft, false, false, (float)10);
-        this.createOption(2, this.rootShared.GetTranslation("mLvlSel"), string.Empty, TextAnchor.MiddleLeft, false, false, (float)0);
-        this.createOption(5, this.rootShared.GetTranslation("mGameMod") + ((!this.rootShared.gameModifiersCheck()) ? string.Empty : " *"), string.Empty, TextAnchor.MiddleLeft, false, false, (float)0);
-        this.createOption(3, this.rootShared.GetTranslation("mOptions"), string.Empty, TextAnchor.MiddleLeft, false, false, (float)10);
-        this.createOption(4, this.rootShared.GetTranslation("mCredits"), string.Empty, TextAnchor.MiddleLeft, false, false, (float)0);
+        // this.createOption(0, this.rootShared.GetTranslation("mContinue"), string.Empty, TextAnchor.MiddleLeft, false, false, (float)0);
+        this.createOption(0, "Multiplayer", string.Empty, TextAnchor.MiddleLeft, false, false, (float)10);
+        //  this.createOption(2, this.rootShared.GetTranslation("mLvlSel"), string.Empty, TextAnchor.MiddleLeft, false, false, (float)0);
+        // this.createOption(5, this.rootShared.GetTranslation("mGameMod") + ((!this.rootShared.gameModifiersCheck()) ? string.Empty : " *"), string.Empty, TextAnchor.MiddleLeft, false, false, (float)0);
+        this.createOption(1, this.rootShared.GetTranslation("mOptions"), string.Empty, TextAnchor.MiddleLeft, false, false, (float)10);
+        this.createOption(2, this.rootShared.GetTranslation("mCredits"), string.Empty, TextAnchor.MiddleLeft, false, false, (float)0);
         if (!this.rootShared.runningOnConsole)
         {
-            this.createOption(6, this.rootShared.GetTranslation("mQuit"), string.Empty, TextAnchor.MiddleLeft, false, false, (float)20);
+            this.createOption(3, this.rootShared.GetTranslation("mQuit"), string.Empty, TextAnchor.MiddleLeft, false, false, (float)20);
         }
+
+        /*
         if (SavedData.GetInt("level") == 0 || SavedData.GetInt("level") == 53)
         {
             this.disableOption[0] = true;
@@ -1162,13 +1167,13 @@ public class OptionsMenuScript : MonoBehaviour
             this.curOptionSortedNr = (float)1;
         }
         else
-        {
-            this.curOption = 0;
-            this.curOptionSortedNr = (float)0;
-        }
+        {*/
+        this.curOption = 0;
+        this.curOptionSortedNr = (float)0;
+        //  }
 
-        this.disableOption[0] = true;
-        this.disableOption[2] = true;
+        // this.disableOption[0] = true;
+        // this.disableOption[2] = true;
 
         this.updateOptionSettings(true);
         this.gameModifiersNotice.SetActive(this.rootShared.gameModifiersCheck());
@@ -1179,14 +1184,15 @@ public class OptionsMenuScript : MonoBehaviour
         this.clearMenu();
         this.curActiveMenu = 1337;
         theHeader.text = "Multiplayer";
-        this.nrOfOptions = 2;
-        this.menuBackOptionNr = 3;
+        this.nrOfOptions = 3;
+        this.menuBackOptionNr = 2;
         this.curOptionSortedNr = 0;
 
         setUpArrays();
 
         this.createOption(0, "Host Game", string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
         this.createOption(1, "Browse Lobbies", string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
+        this.createOption(2, this.rootShared.GetTranslation("mBack"), string.Empty, TextAnchor.MiddleRight, false, false, (float)20);
 
         this.curOptionSortedNr = 0;
         this.curOption = 0;
@@ -1208,12 +1214,14 @@ public class OptionsMenuScript : MonoBehaviour
 
         this.createOption(0, "Start Game", string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
         this.createOption(1, "Select Level", string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
-        this.createOption(2, "Customize Appearance", string.Empty, TextAnchor.MiddleRight, false, false, 10);
+        this.createOption(2, "Change Gamemode", string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
+        this.createOption(3, "Customize Appearance", string.Empty, TextAnchor.MiddleRight, false, false, 10);
 
         if (!MultiplayerManagerTest.playingAsHost)
         {
             disableOption[0] = true;
             disableOption[1] = true;
+            disableOption[2] = true;
         }
 
         this.curOptionSortedNr = 0;
@@ -1226,11 +1234,11 @@ public class OptionsMenuScript : MonoBehaviour
         int lobbyLevel = int.Parse(SteamMatchmaking.GetLobbyData(MultiplayerManagerTest.lobbyID, "lobbySelectedLevel"));
 
         createSmallHeader("Lobby Info", 0);
-        createOption(3, "Selected Level: " + rootShared.GetMultiplayerLevelName(lobbyLevel), string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
-        createOption(4, "Player Limit: " + playersTxt, string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
+        createOption(4, "Selected Level: " + rootShared.GetMultiplayerLevelName(lobbyLevel), string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
+        //  createOption(5, "Player Limit: " + playersTxt, string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
         createOption(5, "Gamemode: " + (MPGamemodes)int.Parse(gamemodeTxt), string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
 
-        createSmallHeader("Players", 0);
+        createSmallHeader($"Players {players.ToString()}/{MPConstants.MPMOD_MAX_PLAYERS.ToString()}", 0);
 
         int curPlr = -1;
 
@@ -1239,7 +1247,7 @@ public class OptionsMenuScript : MonoBehaviour
             curPlr++;
             CSteamID player = SteamMatchmaking.GetLobbyMemberByIndex(MultiplayerManagerTest.lobbyID, curPlr);
             bool isHost = SteamMatchmaking.GetLobbyOwner(MultiplayerManagerTest.lobbyID) == player;
-            createOption(i, SteamFriends.GetFriendPersonaName(player) + (isHost ? "(HOST)" : ""), string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
+            createOption(i, SteamFriends.GetFriendPersonaName(player) + (isHost ? "<color=yellow>(HOST)</color>" : ""), string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
         }
 
 
@@ -1258,12 +1266,15 @@ public class OptionsMenuScript : MonoBehaviour
         this.clearMenu();
         this.curActiveMenu = 1339;
         theHeader.text = "Lobby List";
-        this.nrOfOptions = lobbies.m_nLobbiesMatching;
+        this.nrOfOptions = 2 + lobbies.m_nLobbiesMatching;
         this.menuBackOptionNr = 3;
         this.curOptionSortedNr = 0;
 
         setUpArrays();
 
+
+        createOption(0, "Back", string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
+        createOption(1, "Refresh", string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
 
         for (int i = 0; i < lobbies.m_nLobbiesMatching; i++)
         {
@@ -1271,7 +1282,7 @@ public class OptionsMenuScript : MonoBehaviour
             this.lobbies.Add(lobby);
 
             string lobbyOwner = SteamMatchmaking.GetLobbyData(lobby, "lobbyOwner");
-            createOption(i, lobbyOwner + "'s Lobby", string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
+            createOption(i + 2, lobbyOwner + "'s Lobby", string.Empty, TextAnchor.MiddleRight, false, false, (i == 0 ? 40 : 0));
         }
 
 
@@ -1295,20 +1306,49 @@ public class OptionsMenuScript : MonoBehaviour
         this.clearMenu();
         this.curActiveMenu = 1340;
         theHeader.text = "Customization";
-        this.menuBackOptionNr = 3;
         this.curOptionSortedNr = 0;
-        nrOfOptions = 5;
 
+        string[] skins = Enum.GetNames(typeof(PlayerSkins)).Select(x => x.Replace("_", " ")).ToArray();
+        nrOfOptions = skins.Length;
 
         setUpArrays();
 
+        for (int i = 0; i < skins.Length; i++)
+            createOption(i, skins[i], string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
+
+        /*
         createOption(0, "Default", string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
         createOption(1, "DeadToast", string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
         createOption(2, "Webgame Protagonist", string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
         createOption(3, "Denny", string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
         createOption(4, "Ophelia", string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
+		*/
 
-        disableOption[(int)MultiplayerManagerTest.inst.selectedSkin] = true;
+        //disableOption[(int)MultiplayerManagerTest.inst.selectedSkin] = true;
+
+        updateOptionSettings(true);
+    }
+
+
+    public virtual void buildMultiplayerGamemodeMenu()
+    {
+
+        this.clearMenu();
+        this.curActiveMenu = 1341;
+        theHeader.text = "Gamemodes";
+        this.menuBackOptionNr = 3;
+        this.curOptionSortedNr = 0;
+        nrOfOptions = 3;
+
+
+        setUpArrays();
+
+        createOption(0, "Normal", string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
+        createOption(1, "Race", string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
+        createOption(2, "PvP", string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
+
+        disableOption[(int)MultiplayerManagerTest.inst.gamemode] = true;
+        disableOption[1] = true;
 
         updateOptionSettings(true);
     }
@@ -2213,7 +2253,10 @@ public class OptionsMenuScript : MonoBehaviour
             {
                 if (this.curOption == 0)
                 {
-                    this.root.quitToMainMenu();
+                    if (!MultiplayerManagerTest.connected)
+                        this.root.quitToMainMenu();
+                    else
+                        MultiplayerManagerTest.inst.Disconnect();
                 }
                 else if (this.curOption == 1)
                 {
@@ -2258,40 +2301,24 @@ public class OptionsMenuScript : MonoBehaviour
                     this.buildMainMenu();
                 }
             }
-            else if (this.curActiveMenu == (float)0)
+            else if (this.curActiveMenu == 0)
             {
                 if (this.curOption == 0)
                 {
-                    this.rootShared.loadingScreenLevelToLoad = SavedData.GetInt("level") + 1;
-                    this.rootShared.levelLoadedFromLevelSelectScreen = false;
-                    ((MainMenuBackgroundScript)GameObject.Find("TheCamera").GetComponent(typeof(MainMenuBackgroundScript))).doStartGame();
-                    this.menuEnabled = false;
+                    buildMultiplayerMenu();
                 }
                 else if (this.curOption == 1)
                 {
-                    //this.buildNewGameMenu();
-                    buildMultiplayerMenu();
-                }
-                else if (this.curOption == 2)
-                {
-                    this.buildLevelSelectMenu();
-                }
-                else if (this.curOption == 3)
-                {
                     this.buildOptionsMenu();
                 }
-                else if (this.curOption == 4)
+                else if (this.curOption == 2)
                 {
                     this.rootShared.loadingScreenLevelToLoad = 54;
                     this.rootShared.levelLoadedFromLevelSelectScreen = false;
                     ((MainMenuBackgroundScript)GameObject.Find("TheCamera").GetComponent(typeof(MainMenuBackgroundScript))).doStartGame();
                     this.menuEnabled = false;
                 }
-                else if (this.curOption == 5)
-                {
-                    this.buildGameModifiersMenu();
-                }
-                else if (this.curOption == 6)
+                else if (this.curOption == 3)
                 {
                     Application.Quit();
                 }
@@ -3106,11 +3133,12 @@ public class OptionsMenuScript : MonoBehaviour
             {
                 if (curOption == 0)
                 {
-                    SteamAPICall_t newLobby = SteamMatchmaking.CreateLobby(ELobbyType.k_ELobbyTypePublic, 4);
+                    SteamAPICall_t newLobby = SteamMatchmaking.CreateLobby(ELobbyType.k_ELobbyTypePublic, MPConstants.MPMOD_MAX_PLAYERS);
                 }
-
-                if (curOption == 1)
+                else if (curOption == 1)
                     SteamMatchmaking.RequestLobbyList();
+                else if (curOption == 2)
+                    buildMainMenu();
             }
 
             else if (this.curActiveMenu == 1338)
@@ -3124,12 +3152,22 @@ public class OptionsMenuScript : MonoBehaviour
                 if (curOption == 1)
                     buildLevelSelectMenu();
                 if (curOption == 2)
+                    buildMultiplayerGamemodeMenu();
+                if (curOption == 3)
                     buildMultiplayerCustomizationMenu();
             }
 
             else if (this.curActiveMenu == 1339)
             {
-                SteamMatchmaking.JoinLobby(lobbies[curOption]);
+
+                if (curOption == 0)
+                    buildMultiplayerMenu();
+
+                if (curOption == 1)
+                    SteamMatchmaking.RequestLobbyList();
+
+                if (curOption > 1)
+                    SteamMatchmaking.JoinLobby(lobbies[curOption - 2]);
                 //if (curOption == 0)
                 // PacketSender.AllClientsLoadLobbyLevel(MultiplayerManagerTest.inst.lobbyLevelToLoadHost);
             }
@@ -3138,6 +3176,13 @@ public class OptionsMenuScript : MonoBehaviour
             {
                 MultiplayerManagerTest.inst.selectedSkin = (PlayerSkins)curOption;
                 SteamMatchmaking.SetLobbyMemberData(MultiplayerManagerTest.lobbyID, "playerSkin", curOption.ToString());
+                buildMultiplayerLobbyMenu();
+            }
+
+            else if (this.curActiveMenu == 1341)
+            {
+                MultiplayerManagerTest.inst.gamemode = (MPGamemodes)curOption;
+                SteamMatchmaking.SetLobbyData(MultiplayerManagerTest.lobbyID, "gamemode", curOption.ToString());
                 buildMultiplayerLobbyMenu();
             }
         }

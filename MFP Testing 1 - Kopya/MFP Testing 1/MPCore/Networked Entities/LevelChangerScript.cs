@@ -31,6 +31,8 @@ public class LevelChangerScript : MonoBehaviour
     private float waitTime = 15;
 
 
+    private bool levelWasFinishedThroughInput = false;
+
     private bool fading = false;
 
     private List<CSteamID> levelCompletors = new List<CSteamID>();
@@ -45,6 +47,47 @@ public class LevelChangerScript : MonoBehaviour
     public void ForceCompleteLevel() => doTheThing(true);
 
 
+    public void OnClientReachLevelEnd(CSteamID finisher)
+    {
+        if (levelCompletors.Contains(finisher))
+            return;
+
+        levelCompletors.Add(finisher);
+        nrOfFinishedPlayers++;
+
+        if (aplayerReachedEndDoOnce)
+        {
+            if (!waitingPlayers)
+            {
+                waitingPlayers = true;
+
+                if (nrOfFinishedPlayers == MultiplayerManagerTest.inst.playerObjects.Count)
+                    return;
+
+
+                Invoke("ForceCompleteLevel", waitTime);
+                MFPEditorUtils.doPedroHint("A player has reached the end\nLevel will finish in " + waitTime.ToString() + " seconds.");
+
+                if (EMFDNS.isLocalUser(finisher))
+                {
+
+                    if (MultiplayerManagerTest.inst.playerObjects.Count > 1)
+                    {
+
+                        int elementAt = UnityEngine.Random.Range(0, MultiplayerManagerTest.inst.playerObjects.Count);
+
+                        while (MultiplayerManagerTest.inst.playerObjects.ElementAt(elementAt).Key == MultiplayerManagerTest.inst.playerID)
+                            elementAt = UnityEngine.Random.Range(0, MultiplayerManagerTest.inst.playerObjects.Count);
+
+                        SpectateMode.InitCam(MultiplayerManagerTest.inst.playerObjects.ElementAt(elementAt).Key);
+                    }
+
+                    PlayerScript.PlayerInstance.enabled = false;
+                }
+            }
+        }
+    }
+
     public virtual void OnTriggerEnter(Collider col)
     {
         if (col.tag != "Player")
@@ -53,7 +96,7 @@ public class LevelChangerScript : MonoBehaviour
         if (MultiplayerManagerTest.singleplayerMode)
             doTheThing();
         else
-            PacketSender.BaseNetworkedEntityRPC("OnPlayerStartInteract", networkHelper.entityIdentifier, new object[] { MultiplayerManagerTest.inst.playerID.m_SteamID }, EP2PSend.k_EP2PSendUnreliable);
+            PacketSender.BaseNetworkedEntityRPC("OnClientReachLevelEnd", networkHelper.entityIdentifier, new object[] { MultiplayerManagerTest.inst.playerID.m_SteamID }, EP2PSend.k_EP2PSendUnreliable);
     }
 
     public virtual void doTheThing(bool mpForce = false)
@@ -87,57 +130,6 @@ public class LevelChangerScript : MonoBehaviour
 
     public void Update()
     {
-
-        if (!EMFDNS.isNull(networkHelper.interactingPlayer) && aplayerReachedEndDoOnce)
-        {
-            aplayerReachedEndDoOnce = false;
-
-
-            CSteamID activatorID = networkHelper.interactingPlayer;
-
-            MFPEditorUtils.Log("Got LevelChangerScript event"); //this line executed
-
-            // if (levelCompletors.Contains(activatorID)) //this line might be problematic
-            //   return;
-
-            if (!levelCompletors.Contains(activatorID))
-            {
-                levelCompletors.Add(activatorID);
-                nrOfFinishedPlayers++;
-            }
-
-            if (!waitingPlayers)
-            {
-                waitingPlayers = true;
-
-                if (nrOfFinishedPlayers == MultiplayerManagerTest.inst.playerObjects.Count)
-                    return;
-
-
-                Invoke("ForceCompleteLevel", waitTime);
-                MFPEditorUtils.doPedroHint("A player has reached the end\nLevel will finish in " + waitTime.ToString() + " seconds.");
-
-                if (EMFDNS.isLocalUser(activatorID))
-                {
-
-                    if (MultiplayerManagerTest.inst.playerObjects.Count > 1)
-                    {
-
-                        int elementAt = UnityEngine.Random.Range(0, MultiplayerManagerTest.inst.playerObjects.Count);
-
-                        while (MultiplayerManagerTest.inst.playerObjects.ElementAt(elementAt).Key == MultiplayerManagerTest.inst.playerID)
-                            elementAt = UnityEngine.Random.Range(0, MultiplayerManagerTest.inst.playerObjects.Count);
-
-                        SpectateMode.InitCam(MultiplayerManagerTest.inst.playerObjects.ElementAt(elementAt).Key);
-                    }
-
-                    PlayerScript.PlayerInstance.enabled = false;
-                }
-            }
-
-        }
-
-
         if (!root.levelEnded && MultiplayerManagerTest.inst.initComplete && waitingPlayers)
         {
             if (nrOfFinishedPlayers == MultiplayerManagerTest.inst.playerObjects.Count)
@@ -159,11 +151,11 @@ public class LevelChangerScript : MonoBehaviour
             if (inputSwitch[index].output > num)
                 num = (int)inputSwitch[index].output;
         }
-        if (num >= 1)
+        if (num >= 1 && !levelCompletors.Contains(MultiplayerManagerTest.inst.playerID))
         {
             networkHelper.ignoreMaxPacketsDoOnce = true;
-            PacketSender.BaseNetworkedEntityRPC("OnPlayerStartInteract", networkHelper.entityIdentifier, new object[] { MultiplayerManagerTest.inst.playerID.m_SteamID }, EP2PSend.k_EP2PSendUnreliable);
+            PacketSender.BaseNetworkedEntityRPC("OnClientReachLevelEnd", networkHelper.entityIdentifier, new object[] { MultiplayerManagerTest.inst.playerID.m_SteamID }, EP2PSend.k_EP2PSendUnreliable);
+            levelWasFinishedThroughInput = true;
         }
     }
-
 }

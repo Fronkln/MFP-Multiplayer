@@ -22,6 +22,7 @@ public class NetworkedEnemyScriptAttachment : BaseNetworkEntity
     public override void OnPlayerStartInteract(ulong activator)
     {
         base.OnPlayerStartInteract(activator);
+
         enemyScript.idle = false;
         enemyScript.wasActivatedByPlayers = true;
         enemyScript.hasBeenOnScreen = true;
@@ -36,6 +37,16 @@ public class NetworkedEnemyScriptAttachment : BaseNetworkEntity
 
     public void OnEnemyDeath()
     {
+        /* 
+             this causes a crash
+        if (enemyScript.specialEnemySyncer != null) 
+            enemyScript.specialEnemySyncer.enabled = false;
+        */
+
+        if (enemyScript.idle) enemyScript.idle = false;
+        if (!enemyScript.runLogic) enemyScript.runLogic = true;
+        if (enemyScript.alertAmount <= 0) enemyScript.alertAmount = 1;
+
         enemyScript.health = 0;
     }
 }

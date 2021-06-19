@@ -11,9 +11,16 @@ using I2.Loc;
 using UnityEngine.UI;
 
 
-//ilginç bir buluş, kendi LevelChangerScriptimi orjinalden eklediğim zaman seviye sonu rpcleri çalışmamaya başladı.
-//belkide senkronizasyon sorunlarının gerçek çözümü bunda saklıdır.
-
+//How to add kill count etc on PvP theory:
+/*
+ * 
+ * 1: PlayerGhostta lastBulletThatHit değişkeni
+ * 2: client kurşunu yiyor, lastBulletThatHit atanıyor (vuran kişide)
+ * 3: eğer lastHitByBullet null değilse ve oyuncu öldü ise kill verilir
+ * 4: lasthitByBullet sonraki karede veya 0.1 snde temizlenir.
+ * 
+ * 
+ */
 
 public enum MPGamemodes
 {
@@ -34,13 +41,9 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
     public int lobbyLevelToLoadHost = 3; //host only
 
 
+#if DEBUG
     public static bool extraDebug = true;
-    #region Debug
-
-    public GameObject debugCube;
-    public GameObject debugText;
-
-    #endregion
+#endif
 
     public MPGamemodes gamemode = MPGamemodes.Normal;
     public PlayerSkins selectedSkin = PlayerSkins.Default;
@@ -56,11 +59,14 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
 
     public List<CSteamID> levelTransitionReady = new List<CSteamID>();
 
+
+    public bool isRace { get { return gamemode == MPGamemodes.Race; } }
+
     public static bool playingAsHost = false;
     public static bool singleplayerMode { get { return inst == null || connected == false; } }
     public static bool inGameplayLevel { get { return PlayerScript.PlayerInstance != null; } }
     public static bool inMenu { get { return SceneManager.GetActiveScene().buildIndex == 1; } }
-    public static bool everyoneLoaded {get { return SteamMatchmaking.GetNumLobbyMembers(MultiplayerManagerTest.inst.globalID) == MultiplayerManagerTest.inst.levelTransitionReady.Count; } }
+    public static bool everyoneLoaded { get { return SteamMatchmaking.GetNumLobbyMembers(MultiplayerManagerTest.inst.globalID) == MultiplayerManagerTest.inst.levelTransitionReady.Count; } }
     public static bool clearDoOnce = false;
 
     public static bool transitioningToNextLevel = false;
@@ -97,10 +103,6 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
     public bool isMotorcycleLevel = false;
     public bool isSkyfallLevel = false;
 
-    private float startUnityTimescale;
-    private float startFixedDeltaTime;
-    private float startMaximumDeltaTime;
-
     private OptionsMenuScript menuScript;
 
     IEnumerator TransitionWait()
@@ -109,7 +111,7 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
         PrepareMPCore();
     }
 
-   public IEnumerator LoadLobbyLevel()
+    public IEnumerator LoadLobbyLevel()
     {
 
         asyncLoadDone = false;
@@ -142,24 +144,8 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
         SceneManager.LoadScene(1);
     }
 
-
-    public void PrepareDebugEnts()
-    {
-        //harddisk gelene kadar yok maalesef, çok istiyorsan yeni bir package yaparsın
-        //debugText = DiscordCT.multiplayerBundle.LoadAsset("DebugText") as GameObject;
-        debugText = DiscordCT.debugBundle.LoadAsset("DebugText") as GameObject;
-        debugCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        Destroy(debugCube.GetComponent<BoxCollider>());
-        debugCube.AddComponent<DebugDisappearObject>();
-        debugCube.SetActive(false);
-    }
-
     public void Awake()
     {
-        startUnityTimescale = Time.timeScale;
-        startFixedDeltaTime = Time.fixedDeltaTime;
-        startMaximumDeltaTime = Time.maximumDeltaTime;
-
         if (inst != null && this != inst)
         {
             DestroyImmediate(gameObject);
@@ -178,18 +164,17 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
 
         if (inGameplayLevel)
         {
-            PrepareDebugEnts();
+            
 
             root = GameObject.FindObjectOfType<RootScript>();
 
-            if (PlayerScript.PlayerInstance.onMotorcycle)
-                isMotorcycleLevel = true;
 
-            if (PlayerScript.PlayerInstance.skyfall)
-                isSkyfallLevel = true;
+            isMotorcycleLevel = PlayerScript.PlayerInstance.onMotorcycle;
+            isSkyfallLevel = PlayerScript.PlayerInstance.skyfall;
 
             if (isMotorcycleLevel)
                 MFPEditorUtils.Log("The map is a motorcycle map.");
+
             if (isSkyfallLevel)
                 MFPEditorUtils.Log("The map is a skyfall map.");
 
@@ -199,7 +184,6 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
 
             rootShared = GameObject.FindObjectOfType<RootSharedScript>();
             rootShared.modFocusSlowdownScale = 100;
-            rootShared.modInfiniteFocus = true;
 
             playerPrefab = DiscordCT.multiplayerBundle.LoadAsset("Player") as GameObject;
         }
@@ -224,6 +208,7 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
 
             multiplayerUI = Instantiate(DiscordCT.multiplayerUI).GetComponent<MFPMPUI>();
 
+            /*
             Activity discordActivity = new Activity()
             {
                 Details = "Testing da MP",
@@ -241,20 +226,11 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
                     }
                 }
             };
+            */
 
             SteamFriends.SetRichPresence("steam_display", "test");
-            DiscordController.inst.discord.GetActivityManager().UpdateActivity(discordActivity, new ActivityManager.UpdateActivityHandler(ActivityUpdateHandler));
         }
 
-    }
-
-    public void FixedUpdate()
-    {
-
-        /*   if (root != null)
-               if (root.actionModeActivated)
-                   root.timeSinceSlowMotionUsed = 0;
-        */
     }
 
     public void LateUpdate()
@@ -264,7 +240,13 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
             if (root.levelEnded)
                 return;
 
-            root.resetTimeStuff();
+            if (root.dead)
+            {
+                if (PvPManager.instance != null && PvPManager.instance.slowMotionActivated)
+                    Time.timeScale = ((!root.kAction) ? 1 : (Mathf.Clamp(rootShared.modFocusSlowdownScale, 3, 100) * 0.01f));
+                else if (gamemode != MPGamemodes.Race)
+                    Time.timeScale = 1;
+            }
         }
     }
 
@@ -299,10 +281,37 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
             if (root == null)
         {
 
+            int gamemodeID = int.Parse(SteamMatchmaking.GetLobbyData(lobbyID, "gamemode"));
+            MultiplayerManagerTest.inst.gamemode = (MPGamemodes)gamemodeID;
+
+            if (gamemode == MPGamemodes.PvP)
+                new GameObject().AddComponent<PvPManager>();
+
             //  MFPEditorUtils.Log(SceneManager.GetActiveScene().buildIndex.ToString());
             MFPEditorUtils.Log(GameObject.FindObjectOfType<RootSharedScript>().GetMultiplayerLevelName(SceneManager.GetActiveScene().buildIndex));
             MFPEditorUtils.Log("Refreshing Manager");
-            SoftRefreshManager();   
+            SoftRefreshManager();
+
+
+            MFPEditorUtils.Log(SceneManager.GetActiveScene().buildIndex.ToString());
+
+            if (gamemode == MPGamemodes.PvP)
+                if (SceneManager.GetActiveScene().buildIndex == 50) //Ophelia bossfight
+                {
+                    foreach (SpeechTriggerControllerScript script in GameObject.FindObjectsOfType<SpeechTriggerControllerScript>())
+                        DestroyImmediate(script);
+
+                    foreach (SpeechTriggerScript script in GameObject.FindObjectsOfType<SpeechTriggerScript>())
+                        DestroyImmediate(script);
+
+                    PlayerScript.PlayerInstance.overrideControls = false;
+
+                    foreach (PlayerScript script in GameObject.FindObjectsOfType<PlayerScript>())
+                        if (script.isEnemy) script.gameObject.SetActive(false);
+
+
+                }
+
 
             if (transitioningToNextLevel || forceNextLevelDoOnce)
             {
@@ -316,25 +325,11 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
         }
         else
         {
-            if (Time.timeSinceLevelLoad < 1.5f)
-            {
-                root.resetTimeStuff();
-                /*root.timescale = 1;
-                root.unityTimescale = startUnityTimescale;
-                root.targetUnityTimescale = startUnityTimescale;
-                root.fixedTimescale = startFixedDeltaTime;
-
-                Time.timeScale = startUnityTimescale;
-                Time.fixedDeltaTime = startFixedDeltaTime;
-                Time.maximumDeltaTime = startMaximumDeltaTime;
-                */
-            }
-
-            if(entitiesToRegisterRUNTIME.Count != 0)
+            if (entitiesToRegisterRUNTIME.Count != 0)
             {
                 int startIndex = networkedBaseEntities.Count;
 
-                for(int i = 0; i < entitiesToRegisterRUNTIME.Count; i++)
+                for (int i = 0; i < entitiesToRegisterRUNTIME.Count; i++)
                 {
                     int newID = startIndex + 1;
 
@@ -363,8 +358,6 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
         Application.runInBackground = true;
 
 #if DEBUG
-
-
 
         if (Input.GetKey(KeyCode.LeftShift)) //Create debug player at mouse position
         {
@@ -415,24 +408,6 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
                     PacketEventHandler.HandleEvent(msg, remoteId);
                 else
                     MFPEditorUtils.LogError("Couldn't read package!");
-            }
-        }
-
-        if (inGameplayLevel)
-        {
-            if (!MFPMPUI.isTyping)
-            {
-                //  if (Input.GetKeyDown(KeyCode.X))
-                //  P2PPacketTest();
-
-                if (Input.GetKeyDown(KeyCode.Keypad0))
-                    playingAsHost = (playingAsHost == true ? false : true);
-                if (Input.GetKeyDown(KeyCode.Z))
-                    ChangeToBetaCharacter();
-
-                //   if (Input.GetKey(KeyCode.C))
-                //   AnimatorSync();
-                // P2PPacketTest();
             }
         }
 
@@ -582,17 +557,21 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
         {
             case EChatMemberStateChange.k_EChatMemberStateChangeEntered:
                 if (inMenu)
-                    if(menuScript.curActiveMenuPublic != 0.2f)
-                    menuScript.buildMultiplayerLobbyMenu();
-                MFPEditorUtils.Log(SteamFriends.GetFriendPersonaName((CSteamID)chatUpdate.m_ulSteamIDMakingChange) + " entered the server!");
+                    if (menuScript.curActiveMenuPublic != 0.2f)
+                        menuScript.buildMultiplayerLobbyMenu();
+                MFPEditorUtils.Log(SteamFriends.GetFriendPersonaName((CSteamID)chatUpdate.m_ulSteamIDUserChanged) + " entered the server!");
                 break;
             case EChatMemberStateChange.k_EChatMemberStateChangeLeft:
                 if (inGameplayLevel)
-                    playerObjects[(CSteamID)chatUpdate.m_ulSteamIDMakingChange].DisposePlayer();
+                    playerObjects[(CSteamID)chatUpdate.m_ulSteamIDUserChanged].DisposePlayer();
                 if (inMenu)
                     menuScript.buildMultiplayerLobbyMenu();
                 break;
             case EChatMemberStateChange.k_EChatMemberStateChangeDisconnected:
+                goto case EChatMemberStateChange.k_EChatMemberStateChangeLeft;
+            case EChatMemberStateChange.k_EChatMemberStateChangeBanned:
+                goto case EChatMemberStateChange.k_EChatMemberStateChangeLeft;
+            case EChatMemberStateChange.k_EChatMemberStateChangeKicked:
                 goto case EChatMemberStateChange.k_EChatMemberStateChangeLeft;
         }
 
@@ -648,6 +627,12 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
                 DestroyImmediate(playerObj);
                 playerObj = playerObjects[player].gameObject;
 
+                if (isMotorcycleLevel && !player.isLocalUser())
+                {
+                    GameObject motorcycleGhost = Instantiate(GameObject.Find("PlayerMotorcycle"));
+                    motorcycleGhost.AddComponent<MFPPlayerMotorcycleGhost>().targetGhost = playerObjects[player];
+                }
+
                 playerObj.transform.Find("PlayerGraphics/Hands01").GetComponent<SkinnedMeshRenderer>().enabled = false;
                 playerObj.transform.Find("PlayerGraphics/Head01").GetComponent<SkinnedMeshRenderer>().enabled = false;
                 playerObj.transform.Find("PlayerGraphics/Legs01").GetComponent<SkinnedMeshRenderer>().enabled = false;
@@ -688,6 +673,12 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
     }
 
 
+    public void Disconnect()
+    {
+        SteamMatchmaking.LeaveLobby(globalID);
+        OnLocalClientDisconnect();
+    }
+
     public void StartOrStopServer(bool start)
     {
         if (start)
@@ -708,9 +699,7 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
                 return;
             }
 
-            SteamMatchmaking.LeaveLobby(globalID);
-            OnLocalClientDisconnect();
-
+            Disconnect();
             //  multiplayerUI.startStopServerButton.buttonText().text = "Start Server";
         }
     }
@@ -746,9 +735,15 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
     public void SoftRefreshManager() //shit code fitting for a shit programmer, maybe add this to awake
     {
         root = GameObject.FindObjectOfType<RootScript>();
+        rootShared = GameObject.FindObjectOfType<RootSharedScript>();
 
-        root.timescale = 1;
-        Time.timeScale = 1;
+
+        if (gamemode == MPGamemodes.PvP)
+            if (SceneManager.GetActiveScene().buildIndex == 50)
+                root.Invoke("StopIntroMusicLoop", 2);
+
+        rootShared.modFocusSlowdownScale = 100;
+
 
         if (PlayerScript.PlayerInstance.onMotorcycle)
             isMotorcycleLevel = true;
@@ -761,8 +756,10 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
         if (isSkyfallLevel)
             MFPEditorUtils.Log("The map is a skyfall map.");
 
-        rootShared = GameObject.FindObjectOfType<RootSharedScript>();
-        rootShared.modFocusSlowdownScale = 100;
+
+        if (gamemode == MPGamemodes.Race)
+            rootShared.modFocusSlowdownScale = 25;
+
 
         playerPrefab = DiscordCT.multiplayerBundle.LoadAsset("Player") as GameObject;
         playerID = SteamUser.GetSteamID();
@@ -771,6 +768,7 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
 
         multiplayerUI = Instantiate(DiscordCT.multiplayerUI).GetComponent<MFPMPUI>();
 
+        /*
         Activity discordActivity = new Activity()
         {
             Details = "Testing da MP",
@@ -788,9 +786,11 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
                 }
             }
         };
+        
 
         SteamFriends.SetRichPresence("steam_display", "test");
         DiscordController.inst.discord.GetActivityManager().UpdateActivity(discordActivity, new ActivityManager.UpdateActivityHandler(ActivityUpdateHandler));
+        */
     }
 
 

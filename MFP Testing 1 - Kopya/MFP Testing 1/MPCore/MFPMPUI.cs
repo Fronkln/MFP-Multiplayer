@@ -14,6 +14,8 @@ public class MFPMPUI : MonoBehaviour
     public Text debugPlayerCount;
     public Toggle toggleMPGhost;
 
+    public Text pvpSlowMotionEventText;
+
     public static bool isTyping = false;
 
     private MultiplayerManagerTest mpManager;
@@ -22,6 +24,8 @@ public class MFPMPUI : MonoBehaviour
     public static GameObject retailHintFocus;
 
     public bool disableGhostsOnInitDoOnce = true;
+
+    public static GameObject playerAvatarTemplate = null;
 
     public void Awake()
     {
@@ -37,7 +41,20 @@ public class MFPMPUI : MonoBehaviour
         toggleMPGhost = transform.Find("debugShowGhost").GetComponent<Toggle>();
         toggleMPGhost.onValueChanged.AddListener(delegate { OnToggleDebugGhost(); });
 
+        pvpSlowMotionEventText = transform.Find("pvpSlowmotionEventText").GetComponent<Text>();
+        pvpSlowMotionEventText.enabled = false;
+
+        chatField.gameObject.SetActive(false);
+
+#if !DEBUG
+        toggleMPGhost.gameObject.SetActive(false);
+#endif
+
         mpManager = MultiplayerManagerTest.inst;
+    }
+
+    public void Start()
+    {
     }
 
     public void OnClickStartStopButton()
@@ -83,26 +100,55 @@ public class MFPMPUI : MonoBehaviour
         else if (!toggleMPGhost.enabled && MultiplayerManagerTest.connected)
             toggleMPGhost.enabled = true;
 
-        if (chatField.isFocused && !isTyping)
-            isTyping = true;
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+            if (chatField.gameObject.activeSelf)
+                CloseChat();
 
 
-
-        if (isTyping && !chatField.isFocused)
+        //Pressed enter
+        if (Input.GetKeyDown(KeyCode.Return))
         {
-            MFPEditorUtils.Log("\nAttempting to send message: " + chatField.text);
-            byte[] message = Encoding.UTF8.GetBytes(chatField.text);
-
-
-            if (!SteamMatchmaking.SendLobbyChatMsg(MultiplayerManagerTest.inst.globalID, message, message.Length))
-                MFPEditorUtils.LogError("Failed to send message");
+            if (chatField.gameObject.activeSelf)
+            {
+                SendChatMessage(chatField.text);
+                CloseChat();
+                isTyping = false;
+            }
             else
-                MFPEditorUtils.Log("Sent the message");
-
-
-            chatField.text = "";
-            isTyping = false;
+            {
+                OpenChat();
+                isTyping = true;
+            }
         }
+    }
+
+    private void CloseChat(bool clean = true)
+    {
+        if (clean)
+            chatField.text = "";
+
+        chatField.DeactivateInputField();
+        chatField.gameObject.SetActive(false);
+    }
+    private void OpenChat()
+    {
+        chatField.gameObject.SetActive(true);
+        chatField.Select();
+        chatField.ActivateInputField();
+    }
+
+
+    private void SendChatMessage(string message)
+    {
+        MFPEditorUtils.Log("\nAttempting to send message: " + message);
+        byte[] messageBytes = Encoding.UTF8.GetBytes(message);
+
+
+        if (!SteamMatchmaking.SendLobbyChatMsg(MultiplayerManagerTest.inst.globalID, messageBytes, message.Length))
+            MFPEditorUtils.LogError("Failed to send message");
+        else
+            MFPEditorUtils.Log("Sent the message");
     }
 }
 

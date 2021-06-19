@@ -6,6 +6,10 @@ using UnityScript.Lang;
 [Serializable]
 public class BulletScript : MonoBehaviour
 {
+
+    public Steamworks.CSteamID shooter;
+
+
     // Token: 0x06000074 RID: 116 RVA: 0x0000236D File Offset: 0x0000056D
     public BulletScript()
     {
@@ -20,6 +24,10 @@ public class BulletScript : MonoBehaviour
     // Token: 0x06000075 RID: 117 RVA: 0x000023A6 File Offset: 0x000005A6
     public virtual void LateUpdate()
     {
+
+        if (MultiplayerManagerTest.inst.gamemode == MPGamemodes.PvP || MultiplayerManagerTest.inst.gamemode == MPGamemodes.Race)
+            return;
+
         if (this.root.doCheckpointLoad)
         {
             this.gameObject.SetActive(false);
@@ -509,6 +517,23 @@ public class BulletScript : MonoBehaviour
                     enemyScript.doorHideTimer = (float)UnityEngine.Random.Range(20, 70);
                 }
             }
+
+            else if (MultiplayerManagerTest.inst.gamemode == MPGamemodes.PvP && col.gameObject.transform.root.name.StartsWith("PlayerGhost"))
+            {
+                Steamworks.CSteamID playerID = (Steamworks.CSteamID)ulong.Parse(col.gameObject.transform.root.name.Split('_')[1]);
+
+                MFPPlayerGhost playerGhost = MultiplayerManagerTest.inst.playerObjects[playerID];
+
+                if (EMFDNS.isLocalUser(playerGhost.owner) || playerGhost.playerAnimator.GetBool("Dodging"))
+                    return;
+
+                if (!this.root.pleaseESRB)
+                    emitBlood(false, 0);
+
+                gameObject.SetActive(false);
+
+            }
+
             else if ((!this.root.pleaseESRB && col.gameObject.tag == "Player" && (!this.friendly || (this.isExplosion && this.timeAlive < (float)15))) || (col.gameObject.tag == "EvilPlayer" && this.friendly))
             {
                 PlayerScript playerScript = (PlayerScript)col.gameObject.GetComponentInParent(typeof(PlayerScript));

@@ -216,6 +216,24 @@ public static class PacketSender
         SendPackageToEveryone(packet, EP2PSend.k_EP2PSendUnreliableNoDelay);
     }
 
+    public static void SendShotgunfire(Vector3 shootVec, Quaternion shootRot, float[] quaternionRnd, bool tempShoulderRBulletPointR2DistanceMultiplier, Vector3 tempShoulderVec3)
+    {
+        P2PMessage packet = new P2PMessage();
+        packet.WriteByte(17);
+        packet.WriteVector3(shootVec);
+        packet.WriteQuaternion(shootRot);
+
+        packet.WriteBool(tempShoulderRBulletPointR2DistanceMultiplier);
+
+        if (tempShoulderRBulletPointR2DistanceMultiplier)
+            packet.WriteVector3(tempShoulderVec3);
+
+        for (int i = 0; i < quaternionRnd.Length; i++)
+            packet.WriteFloat(quaternionRnd[i]);
+
+        SendPackageToEveryone(packet, EP2PSend.k_EP2PSendUnreliableNoDelay);
+    }
+
     public static void SendPlayerWeapon()
     {
         P2PMessage packet = new P2PMessage();
@@ -244,7 +262,7 @@ public static class PacketSender
         else
             packet.WriteByte(7);
 
-        SendPackageToEveryone(packet, EP2PSend.k_EP2PSendUnreliable);
+        SendPackageToEveryone(packet, EP2PSend.k_EP2PSendReliable);
     }
 
 
@@ -316,6 +334,12 @@ public static class PacketSender
         if(rpcNumber == -1)
         {
             MFPEditorUtils.Log("Function " + rpcFunction + " does not exist in RPC list!");
+            return;
+        }
+
+        if (entityID == -1 || !MultiplayerManagerTest.inst.networkedBaseEntities.ContainsKey(entityID))
+        {
+            MFPEditorUtils.Log("Tried to RPC on an entity that didnt exist or somehow the entity ID wasnt registered on the dictionary");
             return;
         }
 
