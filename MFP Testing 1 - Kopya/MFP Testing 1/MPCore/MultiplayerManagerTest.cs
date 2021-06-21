@@ -10,7 +10,6 @@ using UnityEngine.SceneManagement;
 using I2.Loc;
 using UnityEngine.UI;
 
-
 //How to add kill count etc on PvP theory:
 /*
  * 
@@ -87,6 +86,12 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
 
     public static List<BaseNetworkEntity> entitiesToRegister = new List<BaseNetworkEntity>();
     public static List<BaseNetworkEntity> entitiesToRegisterRUNTIME = new List<BaseNetworkEntity>();
+
+
+#if EDICT
+    public Dictionary<uint, NetEnt> edictEnts = new Dictionary<uint, NetEnt>();
+#endif
+
     public Dictionary<int, BaseNetworkEntity> networkedBaseEntities = new Dictionary<int, BaseNetworkEntity>();
     public List<NetworkedEnemyScriptAttachment> networkedEnemies = new List<NetworkedEnemyScriptAttachment>();
 
@@ -144,6 +149,111 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
         SceneManager.LoadScene(1);
     }
 
+    internal static void OnSceneChange()
+    {
+#if EDICT
+        if (inGameplayLevel)
+            PrepareNetEnts();
+#endif
+    }
+
+#if EDICT
+    private static void PrepareNetEnts()
+    {
+        foreach (var kv in MPEntityFactory.registeredEnts)
+        {
+            MonoBehaviour behaviour = (MonoBehaviour)GameObject.FindObjectOfType(kv.Value);
+
+            if (behaviour != null)
+                MPEntityFactory.RegisterEntityTemplate(behaviour.GetType(), kv.Key, behaviour.gameObject);
+        }
+
+        foreach (var kv in MPEntityFactory.registeredEnts)
+        {
+            NetEnt[] behaviours = Array.ConvertAll(GameObject.FindObjectsOfType(kv.Value), item => (NetEnt)item);
+
+            if (!playingAsHost)
+            {
+                foreach (NetEnt bh in behaviours)
+                    Destroy(bh.gameObject);
+            }
+            else
+                foreach (NetEnt netEnt in behaviours)
+                {
+                    netEnt.entName = kv.Key;
+                    netEnt.SetEdict(GenerateEdict());
+                    inst.edictEnts.Add(netEnt.Edict, netEnt); ///////////TEMP!!!
+                    MFPEditorUtils.Log(netEnt.Edict + " EDICT SET! EDICT SET!");
+                }
+
+            MFPEditorUtils.Log(JsonUtility.ToJson(MPEntityFactory.GetEntityTemplate("OpenableDoor")));
+        }
+
+        if (playingAsHost)
+            SendAllEdictEntities();
+    }
+#endif
+
+    private static void SendAllEdictEntities()
+    {
+#if EDICT
+        EdictEntityCreationInfo[] edictData = new EdictEntityCreationInfo[inst.edictEnts.Count];
+        
+        for(int i = 0; i < inst.edictEnts.Count; i++)
+        {
+            var kv = inst.edictEnts.ElementAt(i);
+
+            edictData[i] = new EdictEntityCreationInfo();
+            EdictEntityCreationInfo data = edictData[i];
+
+            data.entityName = kv.Value.entName;
+            data.edictNum = kv.Value.GetEdict();
+            data.serializedData = JsonUtility.ToJson(kv.Value);
+            data.position = kv.Value.transform.position;
+            data.rotation = kv.Value.transform.eulerAngles;
+        }
+
+        P2PMessage package = new P2PMessage();
+        package.WriteByte(19);
+        package.WriteInteger(edictData.Length);
+
+        foreach(EdictEntityCreationInfo inf in edictData)
+        {
+            package.WriteUint(inf.edictNum);
+            package.WriteUnicodeString(inf.entityName);
+
+            package.WriteVector3(inf.position);
+            package.WriteVector3(inf.rotation);
+
+            package.WriteUnicodeString(inf.serializedData);
+        }
+
+
+        PacketSender.SendPackageToEveryone(package, EP2PSend.k_EP2PSendReliable);
+
+#endif
+    }
+
+#if EDICT
+    public static uint GenerateEdict()
+    {
+        uint edict = NetEnt.INVALID_EDICT;
+
+        while (true)
+        {
+            uint thirtyBits = (uint)UnityEngine.Random.Range(0, 1 << 30);
+            uint twoBits = (uint)UnityEngine.Random.Range(0, 1 << 2);
+            edict = (thirtyBits << 2) | twoBits;
+
+            if (!inst.edictEnts.ContainsKey(edict))
+                break;
+        }
+
+        return edict;
+    }
+#endif
+
+
     public void Awake()
     {
         if (inst != null && this != inst)
@@ -164,7 +274,7 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
 
         if (inGameplayLevel)
         {
-            
+
 
             root = GameObject.FindObjectOfType<RootScript>();
 
@@ -292,9 +402,6 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
             MFPEditorUtils.Log("Refreshing Manager");
             SoftRefreshManager();
 
-
-            MFPEditorUtils.Log(SceneManager.GetActiveScene().buildIndex.ToString());
-
             if (gamemode == MPGamemodes.PvP)
                 if (SceneManager.GetActiveScene().buildIndex == 50) //Ophelia bossfight
                 {
@@ -346,12 +453,6 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
 
                 entitiesToRegisterRUNTIME.Clear();
             }
-
-            if (Input.GetKeyDown(KeyCode.M))
-            {
-                MFPEditorUtils.Log(RootScript.RootScriptInstance.sbTransform.ToString());
-                MFPEditorUtils.Log(RootScript.RootScriptInstance.sbTriggerTransform.ToString());
-            }
         }
 
 
@@ -369,6 +470,11 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
                     MFPEditorUtils.Log(SteamFriends.GetFriendPersonaName(reciever));
                 }
             }
+
+
+            if (Input.GetKeyDown(KeyCode.X))
+                MFPEditorUtils.Log(JsonUtility.ToJson(MPEntityFactory.GetEntityTemplate<DoorScript>("OpenableDoor")));
+            //MFPEditorUtils.Log(JsonConvert.SerializeObject(new EdictEntityCreationInfo(), Formatting.Indented));
 
             if (Input.GetKeyDown(KeyCode.I))
             {
@@ -473,21 +579,22 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
             SteamMatchmaking.LeaveLobby(globalID);
     }
 
-    #region Callbacks
+#region Callbacks
 
 
     private void OnLobbyDataUpdate(LobbyDataUpdate_t dataupdate)
     {
         if (inMenu)
         {
-            if (menuScript.curActiveMenuPublic != 0.2f)
+            if (menuScript.curActiveMenuPublic == 1338)
                 menuScript.buildMultiplayerLobbyMenu();
         }
     }
 
     private void OnRecieveLobbyList(LobbyMatchList_t lobbies)
     {
-        if (inMenu) menuScript.buildMultiplayerLobbiesList(lobbies);
+        if (inMenu) 
+            menuScript.buildMultiplayerLobbiesList(lobbies);
     }
 
     private void OnLobbyCreated(LobbyCreated_t lobby)
@@ -505,6 +612,7 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
             SteamMatchmaking.SetLobbyData(lobbyID, "lobbyOwner", username);
             SteamMatchmaking.SetLobbyData(lobbyID, "lobbySelectedLevel", lobbyLevelToLoadHost.ToString());
             SteamMatchmaking.SetLobbyData(lobbyID, "gamemode", gamemodeint.ToString());
+            SteamMatchmaking.SetLobbyData(lobbyID, "version", MPConstants.version);
         }
         else
             MFPEditorUtils.LogError("\nLobby creation failed!");
@@ -533,6 +641,7 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
         {
             MFPEditorUtils.Log("Building lobby menu");
             menuScript.buildMultiplayerLobbyMenu();
+
         }
 
     }
@@ -544,7 +653,6 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
         string IDLobby = invitation.m_ulSteamIDLobby.ToString();
 
         joinID = (CSteamID)ulong.Parse(IDLobby, System.Globalization.NumberStyles.None);
-        MFPEditorUtils.Log("ID Thingy " + invitation.m_ulSteamIDLobby.ToString());
 
         SteamNetworking.AcceptP2PSessionWithUser((CSteamID)invitation.m_ulSteamIDUser);
 
@@ -557,8 +665,11 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
         {
             case EChatMemberStateChange.k_EChatMemberStateChangeEntered:
                 if (inMenu)
-                    if (menuScript.curActiveMenuPublic != 0.2f)
+                    if (menuScript.curActiveMenuPublic == 1338)
                         menuScript.buildMultiplayerLobbyMenu();
+
+                //THEORITICAL CODE
+                SteamNetworking.AcceptP2PSessionWithUser((CSteamID)chatUpdate.m_ulSteamIDUserChanged);
                 MFPEditorUtils.Log(SteamFriends.GetFriendPersonaName((CSteamID)chatUpdate.m_ulSteamIDUserChanged) + " entered the server!");
                 break;
             case EChatMemberStateChange.k_EChatMemberStateChangeLeft:
@@ -598,11 +709,10 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
 
     private void OnP2PSessionRequest(P2PSessionRequest_t p2pRequest)
     {
-        MFPEditorUtils.Log("We recieved P2P session request?? OMGOMG lets aCECPT!!!!!!1111");
         SteamNetworking.AcceptP2PSessionWithUser(p2pRequest.m_steamIDRemote);
     }
 
-    #endregion
+#endregion
 
 
     public void RegisterPlayer(CSteamID player)
@@ -665,8 +775,6 @@ public class MultiplayerManagerTest : MonoBehaviour //Initializes on LevelChange
             BaseNetworkEntity networkedEnt = entitiesToRegister[i];
             networkedEnt.entityIdentifier = i;
             networkedBaseEntities.Add(i, networkedEnt);
-
-            MFPEditorUtils.Log(networkedEnt.transform.name + " = " + networkedEnt.entityIdentifier.ToString() + " added.");
         }
 
         entitiesToRegister.Clear();

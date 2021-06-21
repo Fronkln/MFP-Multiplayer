@@ -272,6 +272,11 @@ public class P2PMessage
     {
         this.byteChunks.Add(BitConverter.GetBytes(l));
     }
+    public void WriteUint(uint ui) 
+    {
+        byteChunks.Add(BitConverter.GetBytes(ui));
+    }
+
 
     public byte ReadByte(bool readWithoutMoving = false) // super useful for reading event only
     {
@@ -323,6 +328,14 @@ public class P2PMessage
         this.rPos += 8;
         return (ulong)uint64;
     }
+    public uint ReadUint()
+    {
+        uint uint64 = (uint)BitConverter.ToUInt64(this.rBytes, this.rPos);
+        this.rPos += 4;
+        return uint64;
+    }
+
+
 
     public string ReadString()
     {
@@ -340,6 +353,28 @@ public class P2PMessage
         this.rPos += (int)num;
         return str;
     }
+
+    public void WriteNullTerminatedString(string st)
+    {
+        string final = st + char.MinValue;
+        byte[] bytes = Encoding.Default.GetBytes(final);
+        byteChunks.Add(bytes);
+ 
+    }
+
+    public string ReadNullTerminatedString()
+    {
+        string str = "";
+        while (true)
+        {
+            char c = Convert.ToChar(rBytes[rPos]);
+            if (c == '\0') break;
+            str += c;
+            rPos++;
+        }
+        return str;
+    }
+
     public bool ReadBool()
     {
         return ReadByte().Equals(1);

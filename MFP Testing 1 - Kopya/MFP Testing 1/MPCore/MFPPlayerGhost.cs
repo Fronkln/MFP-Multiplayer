@@ -11,8 +11,8 @@ public enum PlayerSkins
     Default = 0,
     Victor_Agren = 1,
     Webgame_Protagonist = 2,
-   // Denny = 3,
-   // Ophelia = 4
+    Lowlife
+
 }
 
 public class MFPPlayerGhost : MonoBehaviour
@@ -60,8 +60,8 @@ public class MFPPlayerGhost : MonoBehaviour
 
     //Player body
 
-    private GameObject CLIENT_BetaLegs, CLIENT_BetaHead, CLIENT_BetaHair, CLIENT_BETATORSOR;
 
+    #region Body
     public Transform center;
 
     public Transform head;
@@ -135,16 +135,14 @@ public class MFPPlayerGhost : MonoBehaviour
     public Transform bulletPointR;
     public Transform bulletPointL;
 
-
     public AudioSource handRAudio;
     public AudioSource handLAudio;
+    #endregion
 
     private MultiplayerManagerTest mpManager;
 
 
     private SkinnedMeshRenderer VhandL, VhandR;
-    private SkinnedMeshRenderer defaultRenderer;
-    public SkinnedMeshRenderer[] agrenRenderers;
     public MeshRenderer[] weaponRenderers;
 
 
@@ -152,6 +150,13 @@ public class MFPPlayerGhost : MonoBehaviour
 
     public List<SkinnedMeshRenderer> activePlayerSkin = new List<SkinnedMeshRenderer>();
     public List<MeshRenderer> activePlayerGuns = new List<MeshRenderer>();
+
+    private MFPCustomizationDef defaultDef = new MFPCustomizationDef();
+    private MFPCustomizationDef agrenDef = new MFPCustomizationDef();
+    private MFPCustomizationDef webProtagDef = new MFPCustomizationDef();
+    private MFPCustomizationDef lowlifeDef = new MFPCustomizationDef();
+
+    private List<MFPCustomizationDef> customDefs = new List<MFPCustomizationDef>();
 
     public static MFPPlayerGhost NewPlayer(CSteamID client, bool debugPlayer = false)
     {
@@ -169,23 +174,26 @@ public class MFPPlayerGhost : MonoBehaviour
     {
         weaponRenderers = GetComponentsInChildren<MeshRenderer>();
 
-        defaultRenderer = transform.Find("PlayerGraphics/TorsorBlackLongSleeve").GetComponent<SkinnedMeshRenderer>();
-        agrenRenderers = new SkinnedMeshRenderer[]
+        defaultDef.ghostRenderers = new SkinnedMeshRenderer[] { transform.Find("PlayerGraphics/TorsorBlackLongSleeve").GetComponent<SkinnedMeshRenderer>(), VhandL, VhandR};
+        defaultDef.clientRenderers = new SkinnedMeshRenderer[] { PlayerScript.PlayerInstance.transform.Find("PlayerGraphics/TorsorBlackLongSleeve").GetComponentInChildren<SkinnedMeshRenderer>() };
+
+        agrenDef.ghostRenderers = new SkinnedMeshRenderer[6]
         {
              transform.Find("PlayerGraphics/Head01").GetComponent<SkinnedMeshRenderer>(),
              transform.Find("PlayerGraphics/Legs01").GetComponent<SkinnedMeshRenderer>(),
              transform.Find("PlayerGraphics/Hair").GetComponent<SkinnedMeshRenderer>(),
+             VhandL,
+             VhandR,
              null
         };
 
-
-        CLIENT_BetaHair = Resources.FindObjectsOfTypeAll<GameObject>().FirstOrDefault((GameObject g) => g.name == "Hair" && g.transform.root.GetComponent<PlayerScript>());
-        CLIENT_BetaHead = Resources.FindObjectsOfTypeAll<GameObject>().FirstOrDefault((GameObject g) => g.name == "Head01" && g.transform.root.GetComponent<PlayerScript>());
-        CLIENT_BetaLegs = Resources.FindObjectsOfTypeAll<GameObject>().FirstOrDefault((GameObject g) => g.name == "Legs01" && g.transform.root.GetComponent<PlayerScript>());
-
-        agrenRenderers[0].materials = CLIENT_BetaHead.GetComponent<SkinnedMeshRenderer>().materials;
-        agrenRenderers[1].materials = CLIENT_BetaLegs.GetComponent<SkinnedMeshRenderer>().materials;
-        agrenRenderers[2].materials = CLIENT_BetaHair.GetComponent<SkinnedMeshRenderer>().materials;
+        agrenDef.clientRenderers = new SkinnedMeshRenderer[4]
+        {
+           Resources.FindObjectsOfTypeAll<GameObject>().FirstOrDefault((GameObject g) => g.name == "Hair" && g.transform.root.GetComponent<PlayerScript>()).GetComponent<SkinnedMeshRenderer>(),
+            Resources.FindObjectsOfTypeAll<GameObject>().FirstOrDefault((GameObject g) => g.name == "Head01" && g.transform.root.GetComponent<PlayerScript>()).GetComponent<SkinnedMeshRenderer>(),
+            Resources.FindObjectsOfTypeAll<GameObject>().FirstOrDefault((GameObject g) => g.name == "Legs01" && g.transform.root.GetComponent<PlayerScript>()).GetComponent<SkinnedMeshRenderer>(),
+            null
+        };
 
         #region Agren Torso Load Ghost
 
@@ -200,67 +208,108 @@ public class MFPPlayerGhost : MonoBehaviour
         torsorRenderer.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
         torsorRenderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
 
-        torsor.transform.parent = defaultRenderer.transform;
-        torsor.transform.position = defaultRenderer.transform.position;
+        torsor.transform.parent = defaultDef.ghostRenderers[0].transform;
+        torsor.transform.position = defaultDef.ghostRenderers[0].transform.position;
 
-        SkinnedMeshRenderer originalRenderer = defaultRenderer.GetComponent<SkinnedMeshRenderer>();
+        SkinnedMeshRenderer originalRenderer = defaultDef.ghostRenderers[0];
+        BetaBoneToRetailBone.Fixup(torsorRenderer, originalRenderer);
 
+        agrenDef.ghostRenderers[5] = torsorRenderer;
 
-        Transform[] replacementBones = new Transform[25];
+        SkinnedMeshRenderer cliRend = Instantiate(torsorRenderer, defaultDef.clientRenderers[0].transform.parent);
+        cliRend.bones = defaultDef.clientRenderers[0].bones;
+        cliRend.rootBone = defaultDef.clientRenderers[0].rootBone;
 
-        for (int i = 0; i < 23; i++)
-            replacementBones[i] = originalRenderer.bones[i];
+        BetaBoneToRetailBone.Fixup(cliRend, defaultDef.clientRenderers[0]);
 
-        replacementBones[23] = replacementBones[0];
-        replacementBones[24] = replacementBones[0];
+        agrenDef.clientRenderers[3] = cliRend;
 
-        torsorRenderer.bones = replacementBones;
-        torsorRenderer.rootBone = originalRenderer.rootBone;
-        torsorRenderer.probeAnchor = originalRenderer.probeAnchor;
+        torsorRenderer.enabled = false;
+        cliRend.enabled = false;
 
-        torsorRenderer.updateWhenOffscreen = true;
-        agrenRenderers[3] = torsorRenderer;
 
         #endregion
 
-        /*  foreach (SkinnedMeshRenderer rend in GetComponentsInChildren<SkinnedMeshRenderer>())
-          {
-              rend.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
-              rend.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
-          }
-          */
+        webProtagDef.ghostRenderers = new SkinnedMeshRenderer[]
+        {
+            agrenDef.ghostRenderers[0],
+            agrenDef.ghostRenderers[1],
+            agrenDef.ghostRenderers[3],
+            agrenDef.ghostRenderers[5]
+        };
 
 
-        /*  foreach (MeshRenderer weaponRend in weaponRenderers)
-          {
-             // weaponRend.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
-              //weaponRend.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
-          }
-          */
+        webProtagDef.clientRenderers = new SkinnedMeshRenderer[]
+        {
+            agrenDef.clientRenderers[1],
+            agrenDef.clientRenderers[2],
+            agrenDef.clientRenderers[3]
+        };
 
 
-        for(int i = 0; i < weaponRenderers.Length; i++)
+        lowlifeDef.ghostRenderers = new SkinnedMeshRenderer[]
+        {
+            agrenDef.ghostRenderers[1],
+            transform.Find("PlayerGraphics/betacharacter_head").GetComponent<SkinnedMeshRenderer>(),
+            transform.Find("PlayerGraphics/betacharacter_torso").GetComponent<SkinnedMeshRenderer>(),
+            VhandL,
+            VhandR,
+        };
+        lowlifeDef.clientRenderers = new SkinnedMeshRenderer[]
+        {
+            agrenDef.clientRenderers[2],
+            null,
+            null
+        };
+
+        #region Lowlife Torso and head
+     
+        SkinnedMeshRenderer cliHeadRend = Instantiate(lowlifeDef.ghostRenderers[1], defaultDef.clientRenderers[0].transform.parent);
+        cliHeadRend.bones = defaultDef.clientRenderers[0].bones;
+        cliHeadRend.rootBone = defaultDef.clientRenderers[0].rootBone;
+
+        lowlifeDef.clientRenderers[1] = cliHeadRend;
+
+
+        lowlifeDef.clientRenderers[2] = cliHeadRend;
+
+        SkinnedMeshRenderer cliTorsoRend = Instantiate(lowlifeDef.ghostRenderers[2], defaultDef.clientRenderers[0].transform.parent);
+        cliTorsoRend.bones = defaultDef.clientRenderers[0].bones;
+        cliTorsoRend.rootBone = defaultDef.clientRenderers[0].rootBone;
+
+        lowlifeDef.clientRenderers[2] = cliTorsoRend;
+        
+
+        #endregion
+
+
+        for (int i = 0; i < weaponRenderers.Length; i++)
             weaponRenderers[i].material = PlayerScript.PlayerInstance.allWepRenderers[i].material;
 
-        defaultRenderer.materials = PlayerScript.PlayerInstance.transform.Find("PlayerGraphics/TorsorBlackLongSleeve").GetComponentInChildren<SkinnedMeshRenderer>().materials;
-         defaultRenderer.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.BlendProbes;
-        defaultRenderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.BlendProbes;
+        defaultDef.ghostRenderers[0].materials = defaultDef.clientRenderers[0].materials;
+        defaultDef.ghostRenderers[0].lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.BlendProbes;
+        defaultDef.ghostRenderers[0].reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.BlendProbes;
+
+        customDefs.Add(defaultDef);
+        customDefs.Add(agrenDef);
+        customDefs.Add(webProtagDef);
+        customDefs.Add(lowlifeDef);
     }
 
     public void ToggleGhost()
     {
         if (MFPMPUI.inst.toggleMPGhost.isOn)
-            ChangeSkin(currentPlayerSkin);
+            EnableRenderers();
+        //ChangeSkin(currentPlayerSkin);
         else
             DisableRenderers();
     }
 
+    //hese two are ghost only
     public void DisableRenderers()
     {
-        defaultRenderer.enabled = false;
-
-        foreach (SkinnedMeshRenderer rend in agrenRenderers)
-            rend.enabled = false;
+        foreach (MFPCustomizationDef def in customDefs)
+            def.DisableGhostRenderer();
 
         foreach (MeshRenderer wepRend in weaponRenderers)
             wepRend.enabled = false;
@@ -269,9 +318,21 @@ public class MFPPlayerGhost : MonoBehaviour
         VhandR.enabled = false;
     }
 
+    public void EnableRenderers()
+    {
+     
+         customDefs[(int)currentPlayerSkin].EnableGhostRenderer();
+
+        foreach (MeshRenderer wepRend in weaponRenderers)
+            wepRend.enabled = true;
+    }
+
     public void ChangeSkin(PlayerSkins newPlayerSkin)
     {
         DisableRenderers();
+        foreach (MFPCustomizationDef def in customDefs)
+            def.DisableAll();
+
         currentPlayerSkin = newPlayerSkin;
 
         PlayerScript player = PlayerScript.PlayerInstance;
@@ -280,12 +341,19 @@ public class MFPPlayerGhost : MonoBehaviour
         VhandR.enabled = true;
 
 
-        if(MultiplayerManagerTest.inst.isSkyfallLevel)
+        if (MultiplayerManagerTest.inst.isSkyfallLevel)
         {
             MFPEditorUtils.Log("Deadtoast and Web protag is broken in skyfall, switching to default");
             currentPlayerSkin = PlayerSkins.Default;
         }
 
+
+        if (!owner.isLocalUser())
+            EnableRenderers();
+
+        customDefs[(int)newPlayerSkin].EnableSituational(owner.isLocalUser());
+
+        /*
         switch (currentPlayerSkin)
         {
             default:
@@ -294,7 +362,7 @@ public class MFPPlayerGhost : MonoBehaviour
             case PlayerSkins.Default:
                 defaultRenderer.enabled = true;
                 break;
-            case PlayerSkins.Victor_Agren:           
+            case PlayerSkins.Victor_Agren:
 
                 #region Client-side
 
@@ -320,13 +388,13 @@ public class MFPPlayerGhost : MonoBehaviour
                     else
                         MFPEditorUtils.Log("Head01 not present!");
 
-                    if(CLIENT_BetaLegs != null)
-                    CLIENT_BetaLegs.SetActive(true);
+                    if (CLIENT_BetaLegs != null)
+                        CLIENT_BetaLegs.SetActive(true);
 
                     //  agrenRenderers[1].material = betaLegs.GetComponent<SkinnedMeshRenderer>().sharedMaterial;
 
-                    if(CLIENT_BetaHair != null)
-                    CLIENT_BetaHair.SetActive(true);
+                    if (CLIENT_BetaHair != null)
+                        CLIENT_BetaHair.SetActive(true);
 
 
                     #region Agren Torso Load Client
@@ -404,7 +472,7 @@ public class MFPPlayerGhost : MonoBehaviour
 
 
                 CLIENT_BETATORSOR.GetComponent<SkinnedMeshRenderer>().material.mainTexture = CustomizationAssets.mfpClassicTorso.mainTexture;
-              
+
 
                 PlayerScript.PlayerInstance.handRPublic.Find("hand_01").GetComponent<SkinnedMeshRenderer>().material.color = Color.black;
                 PlayerScript.PlayerInstance.handLPublic.Find("hand_01_L").GetComponent<SkinnedMeshRenderer>().material.color = Color.black;
@@ -426,10 +494,12 @@ public class MFPPlayerGhost : MonoBehaviour
 
             MFPEditorUtils.Log("classic ghost end");
         }
-
+   //     foreach (Renderer rend in  test.clientRenderers)
+         //   rend.enabled = true;
 
         foreach (MeshRenderer wepRend in weaponRenderers)
             wepRend.enabled = true;
+        */
 
     }
 
@@ -440,7 +510,7 @@ public class MFPPlayerGhost : MonoBehaviour
         playerGraphics = transform.GetChild(0);
         playerAnimator = playerGraphics.GetComponent<Animator>();
 
-       
+
 
         layerBlendsGhost = new float[playerAnimator.layerCount];
         for (int i = 0; i < layerBlendsGhost.Length; i++)
@@ -550,7 +620,7 @@ public class MFPPlayerGhost : MonoBehaviour
         this.ammoLeftAudio.volume = (float)(1.5 * (double)num - 0.5) + UnityEngine.Random.Range(-0.05f, 0.05f);
         this.ammoLeftAudio.Play(); 
         */
-        
+
     }
     public Texture2D GetSmallAvatar()
     {
@@ -581,28 +651,32 @@ public class MFPPlayerGhost : MonoBehaviour
     public void Start()
     {
 
-        MFPEditorUtils.Log("something will go terribly wrong");
-        MFPEditorUtils.Log((MFPMPUI.playerAvatarTemplate.gameObject != null).ToString());
-        WorldSpaceUI ui = Instantiate(MFPMPUI.playerAvatarTemplate).GetComponent<WorldSpaceUI>();
-        ui.transform.localScale = new Vector3(ui.transform.localScale.x, -ui.transform.localScale.y, ui.transform.localScale.z);
-        ui.transform.parent = MultiplayerManagerTest.inst.multiplayerUI.transform;
-        ui.transform.GetComponent<UnityEngine.UI.RawImage>().texture = GetSmallAvatar();
-        ui.offset = new Vector3(0, -2.4f, 0);
-        //ui.GetComponent<UnityEngine.UI.Text>().text = "AMON";
-        ui.target = transform;
-
+        if (!owner.isLocalUser())
+        {
+            WorldSpaceUI ui = Instantiate(MFPMPUI.playerAvatarTemplate).GetComponent<WorldSpaceUI>();
+            ui.transform.localScale = new Vector3(ui.transform.localScale.x, -ui.transform.localScale.y, ui.transform.localScale.z);
+            ui.transform.parent = MultiplayerManagerTest.inst.multiplayerUI.transform;
+            ui.transform.GetComponent<UnityEngine.UI.RawImage>().texture = GetSmallAvatar();
+            ui.offset = new Vector3(0, -2.4f, 0);
+            //ui.GetComponent<UnityEngine.UI.Text>().text = "AMON";
+            ui.target = transform;
+        }
         if (!debugPlayer)
         {
             string playerSk = SteamMatchmaking.GetLobbyMemberData(MultiplayerManagerTest.lobbyID, owner, "playerSkin");
             ChangeSkin((PlayerSkins)int.Parse(playerSk));
+
         }
         else
         {
             ChangeWeapon(1);
             ChangeSkin((PlayerSkins)UnityEngine.Random.Range(0, 3));
         }
+    }
 
 
+    private void PrepareCollision()
+    {
         if (!owner.isLocalUser())
         {// DANGEROUS CHANGE MAYBE??????????? eğer limblere de Player tagı verirsen OnStartInteract'de mfpplayerghost olup olmadığını kontrol etmen gerekir
             gameObject.tag = "Player";
@@ -658,7 +732,6 @@ public class MFPPlayerGhost : MonoBehaviour
             upperLegR.gameObject.layer = 0;
             upperLegL.gameObject.layer = 0;
         }
-
     }
 
     public void ChangeWeapon(byte weapon)
@@ -766,21 +839,21 @@ public class MFPPlayerGhost : MonoBehaviour
 
         // agrenRenderers[3].enabled = true;
 
-    /*    if (mpManager.root.dead)
-        {
-            if (!dead && !deadDoOnce)
+        /*    if (mpManager.root.dead)
             {
-                MFPEditorUtils.Log("IM DETT");
-                PacketSender.SendPlayerLifeState(false);
-                deadDoOnce = true;
+                if (!dead && !deadDoOnce)
+                {
+                    MFPEditorUtils.Log("IM DETT");
+                    PacketSender.SendPlayerLifeState(false);
+                    deadDoOnce = true;
+                }
             }
-        }
-        else
-        {
-            if (dead)
-                PacketSender.SendPlayerLifeState(true);
-        }
-        */
+            else
+            {
+                if (dead)
+                    PacketSender.SendPlayerLifeState(true);
+            }
+            */
 
 
         if (!debugFreezeGhost)
@@ -797,7 +870,7 @@ public class MFPPlayerGhost : MonoBehaviour
         {
 
             if (dead && PlayerScript.PlayerInstance.health > 0)
-               PacketSender.SendPlayerLifeState(true);
+                PacketSender.SendPlayerLifeState(true);
 
 
             weapon = PlayerScript.PlayerInstance.weapon;
@@ -830,7 +903,7 @@ public class MFPPlayerGhost : MonoBehaviour
 
         MFPEditorUtils.Log("ghost layer blend set");
 
-       playerAnimator.Play("OnGround Blend Tree", 0, 0); 
+        playerAnimator.Play("OnGround Blend Tree", 0, 0);
 
         if (owner.isLocalUser())
         {
@@ -861,7 +934,7 @@ public class MFPPlayerGhost : MonoBehaviour
         {
             Animator playerAnim = PlayerScript.PlayerInstance.playerAnimator;
 
-           layerBlendsPlayer = new float[playerAnim.layerCount];
+            layerBlendsPlayer = new float[playerAnim.layerCount];
             for (int i = 0; i < layerBlendsPlayer.Length; i++)
                 layerBlendsPlayer[i] = playerAnim.GetLayerWeight(i);
 

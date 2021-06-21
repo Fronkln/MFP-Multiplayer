@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -46,9 +47,53 @@ public class DiscordCT
             Debugging.debugCube.SetActive(false);
 
             new GameObject("MultiplayerManager").AddComponent<MultiplayerManagerTest>();
+            UnityEngine.SceneManagement.SceneManager.activeSceneChanged += delegate { MultiplayerManagerTest.OnSceneChange(); };
+
+
+            RegisterNetEnts();
         }
 
         MFPEditorUtils.ClearLog();
-        MFPEditorUtils.InitGUILogging();
+        MFPEditorUtils.InitGUILogging();;
+    }
+
+    private static void RegisterNetEnts()
+    {
+#if EDICT
+        foreach (Assembly assmb in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            Type[] allTypes = assmb.GetTypes();
+            Type targetBase = typeof(MonoBehaviour);
+
+            for (int i = 0; i < allTypes.Length; i++)
+            {
+                Type type = allTypes[i];
+
+                bool isValidEntity = (type == targetBase || type.IsSubclassOf(targetBase));
+
+                if (isValidEntity)
+                    RegisterNetEnt(type);
+                else
+                    continue;
+            }
+
+ 
+
+        }
+#endif
+    }
+
+    private static void RegisterNetEnt(Type ent)
+    {
+        object linkAttrib = ent.GetCustomAttribute<MPModEntityAttribute>(false);
+
+        MPModEntityAttribute linkedEntity = null;
+        linkedEntity = linkAttrib as MPModEntityAttribute;
+
+        if (linkedEntity != null)
+        {
+            MPEntityFactory.RegisterEntity(ent, linkedEntity.entName);
+            MFPEditorUtils.Log("Registered net entity " + linkedEntity.entName);
+        }
     }
 }

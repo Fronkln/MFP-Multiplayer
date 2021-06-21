@@ -18,7 +18,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>D:\Program Files (x86)\Steam\steamapps\common\My Friend Pedro\My Friend Pedro - Blood Bullets Bananas_Data\Managed\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -31,10 +31,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="BetaBoneToRetailBone.cs" />
     <Compile Include="CustomizationAssets.cs" />
     <Compile Include="DiscordCT.cs" />
     <Compile Include="EMFDNS.cs" />
     <Compile Include="HarmonyPatches.cs" />
+    <Compile Include="MFPCustomizationDef.cs" />
     <Compile Include="MFPPlayerMotorcycleGhost.cs" />
     <Compile Include="MFPPlayerSpeechController.cs" />
     <Compile Include="MPConstants.cs" />
@@ -43,6 +45,7 @@
     <Compile Include="MPCore\Debug\Debugging.cs" />
     <Compile Include="MPCore\LoadNextLevelAllClientsAsync.cs" />
     <None Include="MPCore\Networked Entities\BarrelScript.cs" />
+    <Compile Include="MPCore\NetEnt.cs" />
     <Compile Include="MPCore\Networked Entities\BaseNetworkEntity.cs" />
     <Compile Include="MPCore\MFPMPUI.cs" />
     <Compile Include="MFPEditorUtils.cs" />
@@ -59,14 +62,19 @@
     <None Include="MPCore\Networked Entities\LevelChangerScript.cs" />
     <None Include="MPCore\Networked Entities\MotorcycleWaveSpawnerScript.cs" />
     <None Include="MPCore\Networked Entities\MotorcycleScript.cs" />
+    <None Include="MPCore\Networked Entities\BouncePadScript.cs" />
+    <Compile Include="MPCore\Networked Entities\Edict\EdictEntityCreationInfo.cs" />
+    <Compile Include="MPCore\Networked Entities\MPModEntityAttribute.cs" />
     <Compile Include="MPCore\Networked Entities\NetworkedBaseTransform.cs" />
     <None Include="MPCore\Networked Entities\PedroBossScript.cs" />
     <None Include="MPCore\Networked Entities\SkyfallEnemySpawnerScript.cs" />
     <None Include="MPCore\Networked Entities\SkateboardScript.cs" />
+    <None Include="MPCore\Networked Entities\SpinScrewScript.cs" />
     <Compile Include="MPCore\PvPManager.cs" />
     <Compile Include="MPCore\SpectateMode.cs" />
     <None Include="MPCore\Networked Entities\RootScript.cs" />
     <Compile Include="MPCore\WorldSpaceUI.cs" />
+    <Compile Include="MPEntityFactory.cs" />
     <Compile Include="RuntimeUI.cs" />
     <None Include="MPCore\Networked Entities\EnemyScript.cs" />
     <None Include="MPCore\Networked Entities\LevelChangerScript_old.cs" />
@@ -119,8 +127,6 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="TextMeshPro-2017.3-Runtime, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>

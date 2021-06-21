@@ -107,6 +107,9 @@ public static class NetworkedBaseRPCFunctions
                 case 19:
                     entity.GetComponent<LevelChangerScript>().OnClientReachLevelEnd((Steamworks.CSteamID)packet.ReadUlong());
                     break;
+                case 20:
+                    entity.GetComponent<BouncePadScript>().doVisualThing();
+                    break;
 
             }
         }
@@ -164,6 +167,8 @@ public static class NetworkedBaseRPCFunctions
                 return 18;
             case "OnClientReachLevelEnd":
                 return 19;
+            case "TrampolineBounce":
+                return 20;
         }
     }
 
@@ -214,6 +219,8 @@ public static class NetworkedBaseRPCFunctions
                 return "ExecuteState";
             case 19:
                 return "OnClientReachLevelEnd";
+            case 20:
+                return "TrampolineBounce";
         }
 
     }

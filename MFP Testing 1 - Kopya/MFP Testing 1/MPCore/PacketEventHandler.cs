@@ -180,7 +180,12 @@ public static class PacketEventHandler
             case 18:
                 PvPManager.instance.OnSlowmotionEventStart();
                 break;
-            
+#if EDICT
+            //Server sent edict data to all clients
+            case 19:
+                DoEdictRead(packet, remoteID);
+                break;
+#endif
 
             //HostActivateEntityRequest
             case 252:
@@ -282,5 +287,30 @@ public static class PacketEventHandler
                 break;
         }
     }
+
+#if EDICT
+    private static void DoEdictRead(P2PMessage packet, CSteamID remote)
+    {
+        EdictEntityCreationInfo ReadEdictData()
+        {
+            EdictEntityCreationInfo edictData = new EdictEntityCreationInfo();
+         
+            edictData.edictNum = packet.ReadUint();
+            edictData.entityName = packet.ReadUnicodeString();
+
+            edictData.position = packet.ReadVector3();
+            edictData.rotation = packet.ReadVector3();
+
+            edictData.serializedData  = packet.ReadUnicodeString();
+
+            return edictData;
+        }
+
+        int edictCount = packet.ReadInteger();
+
+        for (int i = 0; i < edictCount; i++)
+            ReadEdictData().Create();
+    }
+#endif
 }
 

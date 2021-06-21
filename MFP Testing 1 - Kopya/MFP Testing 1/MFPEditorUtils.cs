@@ -141,15 +141,19 @@ public static class MFPEditorUtils
             guiInstance = new GameObject().AddComponent<MFPEditorDebuggerRuntime>();
     }
 
-    public static void Log(string text)
+    public static void Log(string st)
     {
-        Debug.Log("[MFPEDITORUTILS]:" + text);
-        File.AppendAllText(LoadFile(modName + "_log.txt"), Environment.NewLine + text);
+        Debug.Log("[MFPEDITORUTILS]:" + st);
+        File.AppendAllText(LoadFile(modName + "_log.txt"), Environment.NewLine + st);
 
         if (guiInstance == null)
             InitGUILogging();
 
-            guiInstance.GUILog(text);
+        guiInstance.GUILog(st);
+    }
+    public static void Log(object text)
+    {
+        Log(text.ToString());
     }
 
     public static void LogError(string text)

@@ -1190,6 +1190,8 @@ public class OptionsMenuScript : MonoBehaviour
 
         setUpArrays();
 
+        rootShared.restoreDefaultGameModifiers();
+
         this.createOption(0, "Host Game", string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
         this.createOption(1, "Browse Lobbies", string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
         this.createOption(2, this.rootShared.GetTranslation("mBack"), string.Empty, TextAnchor.MiddleRight, false, false, (float)20);
@@ -1282,7 +1284,19 @@ public class OptionsMenuScript : MonoBehaviour
             this.lobbies.Add(lobby);
 
             string lobbyOwner = SteamMatchmaking.GetLobbyData(lobby, "lobbyOwner");
-            createOption(i + 2, lobbyOwner + "'s Lobby", string.Empty, TextAnchor.MiddleRight, false, false, (i == 0 ? 40 : 0));
+            string version = SteamMatchmaking.GetLobbyData(lobby, "version");
+
+
+            string add = "";
+
+            if (version != MPConstants.version)
+                add += $" (Different Version {version}";
+
+            createOption(i + 2, lobbyOwner + "'s Lobby" + add, string.Empty, TextAnchor.MiddleRight, false, false, (i == 0 ? 40 : 0));
+
+            if (add != "")
+                disableOption[i + 2] = true;
+
         }
 
 
@@ -1492,7 +1506,7 @@ public class OptionsMenuScript : MonoBehaviour
         this.createOption(13, this.rootShared.GetTranslation("mLvl6"), string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
         this.createOption(14, this.rootShared.GetTranslation("mLvl7"), string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
         this.createOption(15, this.rootShared.GetTranslation("mLvl8"), string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
-        this.createOption(16, this.rootShared.GetTranslation("mLvl9"), string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
+        this.createOption(16, this.rootShared.GetTranslation("mLvl9") + "(BUGGY)", string.Empty, TextAnchor.MiddleRight, false, false, (float)0);
         this.createSmallHeader(this.rootShared.GetTranslation("mTheme3"), (float)10);
         this.createOption(17, this.rootShared.GetTranslation("mLvl1"), string.Empty, TextAnchor.MiddleRight, false, false, (float)10);
         this.createOption(18, this.rootShared.GetTranslation("mLvl2"), string.Empty, TextAnchor.MiddleRight, false, false, (float)0);

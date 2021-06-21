@@ -24,7 +24,7 @@ public class DoorScript : MonoBehaviour
     private bool playerOnRight;
     private Collider objCollider;
     // private Transform mainPlayer { get { return MFPPlayerGhost.localInstance; } } using MP Ghost as a way to calculate distance was probably why doors felt delayed.
-    private Transform mainPlayer; 
+    private Transform mainPlayer;
     private RootScript root;
     private AudioSource theAudioSource;
 
